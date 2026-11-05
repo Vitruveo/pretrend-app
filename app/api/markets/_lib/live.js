@@ -16,8 +16,10 @@ export async function fetchSeries(source, fromS, toS) {
   return d.points;
 }
 
-// Quintile edges of trendAbs over every complete window in the last CAL_DAYS. Windows with too few
-// points are skipped. Null until MIN_WINDOWS complete windows exist.
+// Bucket edges from the trendAbs of every complete window in the last CAL_DAYS (windows with too few
+// points are skipped). With MIN_WINDOWS or more: quintiles, so each bucket wins about one window in
+// five. With fewer: five equal 20% slices of the trend range seen so far, symmetric about zero. With
+// none: null, and the starting edges apply.
 async function computeCalibration(market) {
   const rules = rulesFor(market);
   const now = Math.floor(Date.now() / 1000);
@@ -48,13 +50,15 @@ async function computeCalibration(market) {
     if (fit) vals.push(fit.trendAbs);
   }
   vals.sort((x, y) => x - y);
-  if (vals.length < MIN_WINDOWS) return null;
+  if (vals.length === 0) return null;
+  const r2 = (x) => Math.round(x * 100) / 100;
+  if (vals.length < MIN_WINDOWS) {
+    const reach = Math.max(...vals.map((v) => Math.abs(v)));
+    if (!(reach > 0)) return null;
+    return { thresholds: [-0.6, -0.2, 0.2, 0.6].map((f) => r2(f * reach)), windows: vals.length, calibratedAt: now, mode: 'equal' };
+  }
   const q = (p) => vals[Math.min(vals.length - 1, Math.floor(p * (vals.length - 1)))];
-  return {
-    thresholds: [0.2, 0.4, 0.6, 0.8].map((p) => Math.round(q(p) * 100) / 100),
-    windows: vals.length,
-    calibratedAt: now,
-  };
+  return { thresholds: [0.2, 0.4, 0.6, 0.8].map((p) => r2(q(p))), windows: vals.length, calibratedAt: now, mode: 'quintile' };
 }
 
 // Starting edges before enough history exists: the oracle's configured defaults for the source when it
@@ -96,8 +100,9 @@ export async function getCalibration(market) {
       } catch (e) {
         console.error(`[markets] calibration failed for ${market.slug}:`, e.message);
       }
-      if (!v) v = { thresholds: await startingThresholds(market), windows: 0, calibratedAt: null, fallback: true };
-      await kvSet(key, JSON.stringify(v), { ttlMs: (v.fallback ? 300 : CAL_TTL_S) * 1000 }).catch(() => {});
+      if (!v) v = { thresholds: await startingThresholds(market), windows: 0, calibratedAt: null, mode: 'starting', fallback: true };
+      // equal-slice edges move with every new window early on; refresh them every 5 minutes
+      await kvSet(key, JSON.stringify(v), { ttlMs: (v.mode === 'quintile' ? CAL_TTL_S : 300) * 1000 }).catch(() => {});
       memo.set(market.slug, { value: v, expiresAt: now + 60 });
       return v;
     } finally {

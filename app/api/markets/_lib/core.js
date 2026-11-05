@@ -32,7 +32,7 @@ export async function handleLive(market) {
       phase: phaseOf(start, now, rules),
       thresholds: cal.thresholds,
       bLimit: bLimitFor(cal.thresholds, rules.gameS),
-      calibration: { windows: cal.windows, calibratedAt: cal.calibratedAt, fallback: !!cal.fallback },
+      calibration: { windows: cal.windows, calibratedAt: cal.calibratedAt, mode: cal.mode || (cal.fallback ? 'starting' : 'quintile'), fallback: !!cal.fallback },
     },
   ];
 }

@@ -32,7 +32,7 @@ export function MarketTicker({ market, win, thresholds, calibration, lastResult 
     ['LAST RESULT', lastResult ? (lastResult.void ? 'VOID' : BUCKET_NAMES[lastResult.bucket].toUpperCase()) : '…', 'ink'],
     ['SIGNAL CADENCE', `${market.cadenceS}S`, 'ink'],
     ['MARKET WINDOW', market.windowLabel.toUpperCase().replace('-MIN', 'M'), 'ink'],
-    ['CALIBRATION', calibration?.fallback ? 'STARTING EDGES' : `${calibration?.windows ?? 0} WINDOWS`, calibration?.fallback ? 'ember' : 'ink'],
+    ['BUCKETS', !calibration || calibration.mode === 'starting' ? 'STARTING EDGES' : calibration.mode === 'equal' ? `EQUAL 20% · ${calibration.windows} WINDOWS` : `QUINTILES · ${calibration.windows} WINDOWS`, !calibration || calibration.mode === 'starting' ? 'ember' : 'ink'],
     ['STAKES', 'NOT YET', 'ember'],
   ];
   return (
