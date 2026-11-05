@@ -59,34 +59,45 @@ export function MarketRound({ market, win, thresholds, call, result, canCall, on
   const refStart = settled ? result.start : start;
   const viewEnd = settled ? result.start + n - 1 : Math.floor(win.now);
   const viewStart = viewEnd - (n - 1);
+  // x is an absolute timestamp
+  const px = (ts) => PX0 + ((PX1 - PX0) * (ts - viewStart)) / (n - 1);
+  const inView = (ts) => ts >= viewStart && ts <= viewEnd;
+  const tsAtX = (x) => viewStart + ((x - PX0) / (PX1 - PX0)) * (n - 1);
+
+  // The live fit of the points seen so far (or the settled fit).
+  const fit = settled ? result.fit : win.liveFit;
+  const xbar = fit ? fit.xbar : (n - 1) / 2;
+  const pivotTs = refStart + xbar;
+  const edges = stripEdges(thresholds);
+
+  // Y range: the points shown AND the bucket cone where it reaches the strip, so the rays spread
+  // across the plot, the strip boxes are the cone's own geometry, and every line stays straight.
   const [yLo, yHi] = useMemo(() => {
     if (shownPoints.length < 2) return [0, 100];
     let lo = Infinity;
     let hi = -Infinity;
     for (const [, v] of shownPoints) { if (v < lo) lo = v; if (v > hi) hi = v; }
-    const pad = Math.max((hi - lo) * 0.12, Math.abs(hi) * 0.01, 1e-6);
+    if (fit) {
+      const dx = tsAtX(BX0) - pivotTs;
+      const coneLo = fit.ybar + (edges[0] / (n - 1)) * dx;
+      const coneHi = fit.ybar + (edges[5] / (n - 1)) * dx;
+      lo = Math.min(lo, coneLo, coneHi);
+      hi = Math.max(hi, coneLo, coneHi);
+    }
+    const pad = Math.max((hi - lo) * 0.08, Math.abs(hi) * 0.01, 1e-6);
     lo -= pad;
     hi += pad;
     if (market.range) {
-      if (market.range[0] !== null && market.range[0] !== undefined) lo = Math.max(market.range[0], lo);
+      if (market.range[0] !== null && market.range[0] !== undefined) lo = Math.max(market.range[0], lo - pad);
       if (market.range[1] !== null && market.range[1] !== undefined) hi = Math.min(market.range[1], hi);
     }
     return [lo, hi];
-  }, [shownPoints, market.range]);
-
-  // x is an absolute timestamp
-  const px = (ts) => PX0 + ((PX1 - PX0) * (ts - viewStart)) / (n - 1);
-  const inView = (ts) => ts >= viewStart && ts <= viewEnd;
+  }, [shownPoints, market.range, fit, pivotTs, edges, n]); // eslint-disable-line react-hooks/exhaustive-deps
   const py = (v) => PY0 + ((yHi - v) / (yHi - yLo)) * (PY1 - PY0);
-
-  // The live fit of the points seen so far (or the settled fit).
-  const fit = settled ? result.fit : win.liveFit;
-  const xbar = fit ? fit.xbar : (n - 1) / 2;
   const ybar = fit ? fit.ybar : (yLo + yHi) / 2;
 
   // The viewer's line: the slope whose window trend is the middle of their bucket, through the pivot.
   const aimBucket = call !== null && call !== undefined ? call : pick === null ? -1 : pick;
-  const edges = stripEdges(thresholds);
   const b = aimBucket >= 0 ? (edges[aimBucket] + edges[aimBucket + 1]) / 2 / (n - 1) : 0;
   const userA = ybar - b * xbar;
   // Live reading = where the window settles if the current slope holds, i.e. the slope projected
@@ -102,7 +113,6 @@ export function MarketRound({ market, win, thresholds, call, result, canCall, on
   // Trend cone: each threshold is a ray through the fit's pivot with that trend's slope; the wedges
   // between rays are the buckets, drawn from the pivot to the right edge so the dashed line visibly
   // sits in its bucket.
-  const pivotTs = refStart + xbar;
   const rayY = (t, ts) => py(ybar + (t / (n - 1)) * (ts - pivotTs));
   const coneX0 = Math.max(PX0, px(pivotTs));
   const coneTs0 = Math.max(viewStart, pivotTs);
@@ -116,48 +126,15 @@ export function MarketRound({ market, win, thresholds, call, result, canCall, on
     return `${coneX0},${yTop0} ${PX1},${yTopEnd} ${PX1},${yBotEnd} ${coneX0},${yBot0}`;
   });
 
-  // The side strip continues the cone: box edges are where the rays reach the strip, so the dashed
-  // line runs straight into its bucket.
-  const tsAtX = (x) => viewStart + ((x - PX0) / (PX1 - PX0)) * (n - 1);
+  // The side strip continues the cone exactly: box edges are where the rays reach the strip, so the
+  // dashed line runs straight into its bucket. The y range above keeps the cone inside the plot.
   const clampY = (y) => Math.max(PY0, Math.min(PY1, y));
-  const rawStrip = BUCKET_NAMES.map((_, i) => {
+  const stripBoxes = BUCKET_NAMES.map((_, i) => {
     if (!fit) return boxes[i];
     const top = i === 4 ? PY0 : clampY(rayY(thresholds[i], tsAtX(BX0)));
     const bottom = i === 0 ? PY1 : clampY(rayY(thresholds[i - 1], tsAtX(BX0)));
     return [top, bottom];
   });
-  // Every bucket keeps a clickable box: each gets at least MIN_BOX px, taken from the taller ones,
-  // then they are stacked bottom (Crash) to top (Moon) in their original proportions.
-  const MIN_BOX = 28;
-  const stripBoxes = (() => {
-    const avail = PY1 - PY0;
-    const h = rawStrip.map(([t, bt]) => Math.max(MIN_BOX, bt - t));
-    const excess = h.reduce((a, x) => a + x, 0) - avail;
-    if (excess > 0) {
-      const room = h.reduce((a, x) => a + (x - MIN_BOX), 0);
-      const k = room > 0 ? Math.max(0, 1 - excess / room) : 0;
-      for (let i = 0; i < h.length; i++) h[i] = MIN_BOX + (h[i] - MIN_BOX) * k;
-    }
-    const out = [];
-    let y = PY1;
-    for (let i = 0; i < h.length; i++) {
-      out[i] = [y - h[i], y];
-      y -= h[i];
-    }
-    return out;
-  })();
-
-  // Piecewise-linear projection of a trendAbs value onto the stacked strip boxes, so the dashed line
-  // and the viewer's line always enter the box of the bucket they resolve to.
-  const stripYOf = (t) => {
-    const c = Math.max(edges[0], Math.min(edges[5], t));
-    let i = 0;
-    while (i < 4 && c >= edges[i + 1]) i++;
-    const frac = (c - edges[i]) / (edges[i + 1] - edges[i]);
-    const [top, bottom] = stripBoxes[i];
-    return bottom - frac * (bottom - top);
-  };
-  const userTrend = b * (n - 1);
 
   const canPick = !settled && canCall && phase === 'open';
   const showAim = settled ? call !== null && call !== undefined : aimBucket >= 0;
@@ -300,13 +277,13 @@ export function MarketRound({ market, win, thresholds, call, result, canCall, on
           {withStrip && fit && (
             <>
               {thresholds.map((t, i) => (
-                <line key={`rg${i}`} x1={PX1} y1={rayY(t, viewEnd)} x2={BX0} y2={stripBoxes[i][0]} stroke="rgba(238,243,251,0.16)" strokeWidth="1" />
+                <line key={`rg${i}`} x1={PX1} y1={rayY(t, viewEnd)} x2={BX0} y2={rayY(t, tsAtX(BX0))} stroke="rgba(238,243,251,0.16)" strokeWidth="1" />
               ))}
               <line
                 x1={PX1}
                 y1={py(fit.a + fit.b * (viewEnd - refStart))}
                 x2={BX0 - 2}
-                y2={liveTrend === null ? py(fit.a + fit.b * (viewEnd - refStart)) : stripYOf(liveTrend)}
+                y2={py(fit.a + fit.b * (tsAtX(BX0 - 2) - refStart))}
                 stroke={settled ? '#eef3fb' : liveLineColor}
                 strokeWidth="2.5"
                 strokeDasharray="5 6"
@@ -358,7 +335,7 @@ export function MarketRound({ market, win, thresholds, call, result, canCall, on
                   x1={PX1}
                   y1={py(userA + b * (viewEnd - refStart))}
                   x2={BX0 - 2}
-                  y2={stripYOf(userTrend)}
+                  y2={py(userA + b * (tsAtX(BX0 - 2) - refStart))}
                   stroke={EMBER}
                   strokeWidth="2.5"
                   opacity="0.9"
