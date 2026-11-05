@@ -35,6 +35,7 @@ function fmtValue(v, unit) {
   if (unit === 'bnb') return `${v.toLocaleString('en-US', { maximumFractionDigits: 1 })} BNB`;
   if (unit === 'txs') return `${v.toLocaleString('en-US', { maximumFractionDigits: 0 })} txs`;
   if (unit === 'momentum') return v.toFixed(1);
+  if (unit === 'sol') return `${v.toLocaleString('en-US', { maximumFractionDigits: 2 })} SOL`;
   return `$${v.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
 }
 
@@ -98,7 +99,7 @@ function LiveChart({ label, name, points, unit, windowLabel, trendMode, color = 
       {fit && (
         <text x={X1} y={16} textAnchor="end" fill={trendColor} fontSize="12" fontFamily={FONT}>
           {windowLabel} OLS trend: {trendMode === 'abs'
-            ? `${fit.y1 - fit.y0 >= 0 ? '+' : ''}${(fit.y1 - fit.y0).toFixed(unit === 'celsius' || unit === 'bnb' || unit === 'momentum' ? 1 : unit === 'txs' ? 0 : 3)}${unit === 'celsius' ? '\u00b0C' : unit === 'bnb' ? ' BNB' : unit === 'txs' ? ' txs' : ''}`
+            ? `${fit.y1 - fit.y0 >= 0 ? '+' : ''}${(fit.y1 - fit.y0).toFixed(unit === 'celsius' || unit === 'bnb' || unit === 'momentum' || unit === 'sol' ? 1 : unit === 'txs' ? 0 : 3)}${unit === 'celsius' ? '\u00b0C' : unit === 'bnb' ? ' BNB' : unit === 'sol' ? ' SOL' : unit === 'txs' ? ' txs' : ''}`
             : `${fit.trendPct >= 0 ? '+' : ''}${fit.trendPct.toFixed(3)}%`}
         </text>
       )}
