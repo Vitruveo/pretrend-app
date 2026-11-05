@@ -399,10 +399,11 @@ export function MarketRound({ market, win, thresholds, call, result, canCall, on
             {fmtUtc(refStart + n)}
           </text>
 
-          <text x={PX0 - 8} y={PY0 + 6} textAnchor="end" fill="rgba(255,255,255,0.45)" fontSize="13" fontFamily={FONT}>
+          {/* axis labels sit inside the plot's left edge: with a unit they are too wide for the margin */}
+          <text x={PX0 + 6} y={PY0 + 6} textAnchor="start" fill="rgba(255,255,255,0.45)" fontSize="13" fontFamily={FONT}>
             {yHi.toFixed(decimals)}{market.unitLabel ? ` ${market.unitLabel}` : ''}
           </text>
-          <text x={PX0 - 8} y={PY1} textAnchor="end" fill="rgba(255,255,255,0.45)" fontSize="13" fontFamily={FONT}>
+          <text x={PX0 + 6} y={PY1 - 4} textAnchor="start" fill="rgba(255,255,255,0.45)" fontSize="13" fontFamily={FONT}>
             {yLo.toFixed(decimals)}{market.unitLabel ? ` ${market.unitLabel}` : ''}
           </text>
         </svg>
