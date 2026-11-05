@@ -6,6 +6,7 @@ import { MARKETS, findMarket } from '../../config/markets';
 import { MarketView } from '../_components/market-view';
 import { MarketGame } from '../_components/market-game';
 import { GeoProvider, GeoBand } from '../_components/geo';
+import { WalletTile } from '../_components/wallet-tile';
 import '../_components/market-game.css';
 
 export const dynamicParams = false;
@@ -47,6 +48,7 @@ export default async function MarketPage({ params }: { params: Promise<{ market:
                 {m.headline}
               </p>
             </div>
+            <WalletTile />
             {m.game ? <MarketGame market={m} /> : <MarketView market={m} />}
           </div>
         </section>
