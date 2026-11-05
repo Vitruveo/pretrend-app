@@ -90,7 +90,7 @@ export function LiveChart({ label, name, points, unit, windowLabel, trendMode, c
         {fmtValue(last[1], unit)}
       </text>
       <text x={X0} y={16} fill={headlineColor} fontSize="13" fontWeight="600" fontFamily={FONT}>
-        {name} <tspan fill="rgba(255,255,255,0.4)" fontWeight="400">{label}</tspan>
+        {name}<tspan dx="10" fill="rgba(255,255,255,0.4)" fontWeight="400">{label}</tspan>
       </text>
       {fit && (
         <text x={X1} y={16} textAnchor="end" fill={trendColor} fontSize="12" fontFamily={FONT}>
