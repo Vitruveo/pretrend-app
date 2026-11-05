@@ -16,10 +16,12 @@ export async function fetchSeries(source, fromS, toS) {
   return d.points;
 }
 
-// Bucket edges from the trendAbs of every complete window in the last CAL_DAYS (windows with too few
-// points are skipped). With MIN_WINDOWS or more: quintiles, so each bucket wins about one window in
-// five. With fewer: five equal 20% slices of the trend range seen so far, symmetric about zero. With
-// none: null, and the starting edges apply.
+// Bucket edges from every complete window in the last CAL_DAYS (windows with too few points are
+// skipped). With MIN_WINDOWS or more: quintiles of the windows' trendAbs, so each bucket wins about
+// one window in five. With fewer: the default of five equal 20% buckets, spanning the pulse's recent
+// swing: outer edges at minus and plus the median high-to-low range of the recent windows, so a Moon
+// is a trend of more than 60% of a typical window's swing. With no window at all: null, and the
+// starting edges apply.
 async function computeCalibration(market) {
   const rules = rulesFor(market);
   const now = Math.floor(Date.now() / 1000);
@@ -43,17 +45,24 @@ async function computeCalibration(market) {
     }
   }
   const vals = [];
-  for (const w of windows.values()) {
+  const swings = []; // [windowStart, high - low]
+  for (const [k, w] of windows) {
     if (w.length < rules.minSettlePoints) continue;
     w.sort((x, y) => x[0] - y[0]);
     const fit = tsOls(w);
-    if (fit) vals.push(fit.trendAbs);
+    if (!fit) continue;
+    vals.push(fit.trendAbs);
+    let lo = Infinity;
+    let hi = -Infinity;
+    for (const [, v] of w) { if (v < lo) lo = v; if (v > hi) hi = v; }
+    swings.push([k, hi - lo]);
   }
   vals.sort((x, y) => x - y);
   if (vals.length === 0) return null;
   const r2 = (x) => Math.round(x * 100) / 100;
   if (vals.length < MIN_WINDOWS) {
-    const reach = Math.max(...vals.map((v) => Math.abs(v)));
+    const recent = swings.sort((a, b) => b[0] - a[0]).slice(0, 12).map((x) => x[1]).sort((a, b) => a - b);
+    const reach = recent[Math.floor(recent.length / 2)];
     if (!(reach > 0)) return null;
     return { thresholds: [-0.6, -0.2, 0.2, 0.6].map((f) => r2(f * reach)), windows: vals.length, calibratedAt: now, mode: 'equal' };
   }
