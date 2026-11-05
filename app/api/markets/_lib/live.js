@@ -1,0 +1,109 @@
+// Server-side access to the TrendPulse oracle for a market: window series fetches and quintile
+// calibration of the bucket thresholds.
+
+import { TRENDPULSE_BASE, rulesFor, tsOls } from '../../../markets/_lib/gamemath';
+import { kvGet, kvSet } from './kv';
+
+const CAL_DAYS = 3; // history used for quintiles (the oracle serves at most one day per call)
+const CAL_TTL_S = 900; // recalibrate every 15 minutes
+const MIN_WINDOWS = 30;
+
+export async function fetchSeries(source, fromS, toS) {
+  const res = await fetch(`${TRENDPULSE_BASE}/series?source=${source}&from=${fromS}&to=${toS}`, { cache: 'no-store' });
+  if (!res.ok) throw new Error(`oracle series ${res.status}`);
+  const d = await res.json();
+  if (!Array.isArray(d.points)) throw new Error(d.error || 'oracle series malformed');
+  return d.points;
+}
+
+// Quintile edges of trendAbs over every complete window in the last CAL_DAYS. Windows with too few
+// points are skipped. Null until MIN_WINDOWS complete windows exist.
+async function computeCalibration(market) {
+  const rules = rulesFor(market);
+  const now = Math.floor(Date.now() / 1000);
+  const windows = new Map();
+  for (let d = 0; d < CAL_DAYS; d++) {
+    const to = now - d * 86400;
+    const from = to - 86400;
+    let pts;
+    try {
+      pts = await fetchSeries(market.source, from, to);
+    } catch (e) {
+      break;
+    }
+    if (!pts.length) break;
+    for (const p of pts) {
+      const k = Math.floor(p[0] / rules.gameS) * rules.gameS;
+      if (k + rules.gameS > now) continue; // the current window is incomplete
+      let w = windows.get(k);
+      if (!w) windows.set(k, (w = []));
+      w.push(p);
+    }
+  }
+  const vals = [];
+  for (const w of windows.values()) {
+    if (w.length < rules.minSettlePoints) continue;
+    w.sort((x, y) => x[0] - y[0]);
+    const fit = tsOls(w);
+    if (fit) vals.push(fit.trendAbs);
+  }
+  vals.sort((x, y) => x - y);
+  if (vals.length < MIN_WINDOWS) return null;
+  const q = (p) => vals[Math.min(vals.length - 1, Math.floor(p * (vals.length - 1)))];
+  return {
+    thresholds: [0.2, 0.4, 0.6, 0.8].map((p) => Math.round(q(p) * 100) / 100),
+    windows: vals.length,
+    calibratedAt: now,
+  };
+}
+
+// Starting edges before enough history exists: the oracle's configured defaults for the source when it
+// reports itself uncalibrated, else the market's own fallback.
+async function startingThresholds(market) {
+  try {
+    const res = await fetch(`${TRENDPULSE_BASE}/stats/thresholds?source=${market.source}&window=${market.windowS}&lookback=3`, { cache: 'no-store' });
+    const d = await res.json();
+    const t = [d.q20, d.q40, d.q60, d.q80];
+    if (res.ok && d.calibrated === false && t.every((x) => Number.isFinite(x))) return t;
+  } catch (e) {
+    // fall through
+  }
+  return market.fallbackThresholds;
+}
+
+const memo = new Map(); // slug -> { value, expiresAt }
+const inflight = new Map();
+
+// Calibration with three layers: process memo, the shared kv store, fresh compute. Falls back to the
+// starting edges with fallback: true.
+export async function getCalibration(market) {
+  const now = Math.floor(Date.now() / 1000);
+  const m = memo.get(market.slug);
+  if (m && m.expiresAt > now) return m.value;
+  if (inflight.has(market.slug)) return inflight.get(market.slug);
+  const key = `markets:cal:${market.slug}`;
+  const p = (async () => {
+    try {
+      const raw = await kvGet(key).catch(() => null);
+      if (raw) {
+        const v = JSON.parse(raw);
+        memo.set(market.slug, { value: v, expiresAt: now + 60 });
+        return v;
+      }
+      let v = null;
+      try {
+        v = await computeCalibration(market);
+      } catch (e) {
+        console.error(`[markets] calibration failed for ${market.slug}:`, e.message);
+      }
+      if (!v) v = { thresholds: await startingThresholds(market), windows: 0, calibratedAt: null, fallback: true };
+      await kvSet(key, JSON.stringify(v), { ttlMs: (v.fallback ? 300 : CAL_TTL_S) * 1000 }).catch(() => {});
+      memo.set(market.slug, { value: v, expiresAt: now + 60 });
+      return v;
+    } finally {
+      inflight.delete(market.slug);
+    }
+  })();
+  inflight.set(market.slug, p);
+  return p;
+}

@@ -4,6 +4,8 @@ import Header from '../../components/Header';
 import Footer from '../../components/Footer';
 import { MARKETS, findMarket } from '../../config/markets';
 import { MarketView } from '../_components/market-view';
+import { MarketGame } from '../_components/market-game';
+import '../_components/market-game.css';
 
 export const dynamicParams = false;
 
@@ -27,7 +29,7 @@ export default async function MarketPage({ params }: { params: Promise<{ market:
       <Header />
       <main>
         <section className="section-padding bg-dark-custom" style={{ paddingTop: '140px', paddingBottom: '60px' }}>
-          <div className="container" style={{ maxWidth: '960px' }}>
+          <div className="container" style={{ maxWidth: m.game ? '1100px' : '960px' }}>
             <div className="text-center mb-5">
               <p className="text-white-50 mb-2" style={{ letterSpacing: '0.12em', textTransform: 'uppercase', fontSize: '0.8rem' }}>
                 <a href="/" className="text-white-50">Trends</a> / {m.slug}{m.readOnly ? ' / read-only' : ''}
@@ -39,7 +41,7 @@ export default async function MarketPage({ params }: { params: Promise<{ market:
                 {m.headline}
               </p>
             </div>
-            <MarketView market={m} />
+            {m.game ? <MarketGame market={m} /> : <MarketView market={m} />}
           </div>
         </section>
       </main>

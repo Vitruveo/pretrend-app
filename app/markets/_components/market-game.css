@@ -1,0 +1,32 @@
+/* Pretrend market page: ticker, play panel and bucket controls, in the site's palette. */
+.ptm { --ptm-ink: #eef3fb; --ptm-dim: #b9c5da; --ptm-faint: #8fa0ba; --ptm-signal: #2f8fd6; --ptm-ember: #f0954f; --ptm-hairline: rgba(255, 255, 255, 0.1); }
+.ptm-ink { color: var(--ptm-ink); }
+.ptm-dim { color: var(--ptm-dim); }
+.ptm-faint { color: var(--ptm-faint); }
+.ptm-signal { color: var(--ptm-signal); }
+.ptm-ember { color: var(--ptm-ember); }
+.ptm-mono { font-variant-numeric: tabular-nums; }
+
+.ptm-ticker { position: relative; overflow: hidden; border-top: 1px solid var(--ptm-hairline); border-bottom: 1px solid var(--ptm-hairline); background: rgba(0, 0, 0, 0.35); }
+.ptm-marquee { display: flex; width: max-content; padding: 0.6rem 0; font-size: 0.85rem; letter-spacing: 0.18em; text-transform: uppercase; animation: ptm-marquee 48s linear infinite; }
+@keyframes ptm-marquee { from { transform: translateX(0); } to { transform: translateX(-50%); } }
+.ptm-tick { margin: 0 1.4rem; display: inline-flex; align-items: baseline; gap: 0.5rem; white-space: nowrap; }
+
+.ptm-play { margin-top: 1.5rem; }
+.ptm-pick-row { margin-top: 1.5rem; }
+.ptm-bucket-pick { cursor: pointer; }
+.ptm-bucket-pick:hover rect { stroke-width: 2.5; }
+.ptm-bucket-btn { cursor: pointer; transition: background 0.2s ease, border-color 0.2s ease; }
+.ptm-bucket-btn:disabled { cursor: default; }
+.ptm-section { margin-top: 1.5rem; padding-top: 1.25rem; border-top: 1px solid var(--ptm-hairline); }
+.ptm-btn { display: inline-block; border: 1px solid var(--ptm-signal); background: rgba(47, 143, 214, 0.15); color: var(--ptm-signal); padding: 0.6rem 1.4rem; letter-spacing: 0.14em; text-transform: uppercase; font-weight: 600; font-size: 0.85rem; border-radius: 6px; text-decoration: none; }
+.ptm-btn:hover:not(:disabled) { background: rgba(47, 143, 214, 0.3); color: #fff; }
+.ptm-btn:disabled { opacity: 0.45; cursor: not-allowed; }
+.ptm-btn-ghost { border-color: var(--ptm-hairline); background: transparent; color: var(--ptm-dim); }
+.ptm-btn-ghost:hover:not(:disabled) { border-color: var(--ptm-dim); color: var(--ptm-ink); background: transparent; }
+
+.ptm-table { width: 100%; border-collapse: collapse; font-size: 0.9rem; font-variant-numeric: tabular-nums; }
+.ptm-table th { color: var(--ptm-signal); font-weight: 600; text-align: left; padding: 0.5rem 0.7rem; border-bottom: 1px solid var(--ptm-hairline); letter-spacing: 0.1em; text-transform: uppercase; font-size: 0.72rem; }
+.ptm-table td { padding: 0.5rem 0.7rem; border-bottom: 1px solid rgba(255, 255, 255, 0.05); color: var(--ptm-dim); }
+
+@media (prefers-reduced-motion: reduce) { .ptm-marquee { animation: none; } }
