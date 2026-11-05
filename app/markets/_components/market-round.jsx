@@ -85,15 +85,11 @@ export function MarketRound({ market, win, thresholds, call, result, canCall, on
       lo = Math.min(lo, coneLo, coneHi);
       hi = Math.max(hi, coneLo, coneHi);
     }
+    // no floor or ceiling from the pulse's own bounds: the bucket cone must never be cut off, and it
+    // reaches below zero whenever the trend range is wider than the level
     const pad = Math.max((hi - lo) * 0.08, Math.abs(hi) * 0.01, 1e-6);
-    lo -= pad;
-    hi += pad;
-    if (market.range) {
-      if (market.range[0] !== null && market.range[0] !== undefined) lo = Math.max(market.range[0], lo - pad);
-      if (market.range[1] !== null && market.range[1] !== undefined) hi = Math.min(market.range[1], hi);
-    }
-    return [lo, hi];
-  }, [shownPoints, market.range, fit, pivotTs, edges, n]); // eslint-disable-line react-hooks/exhaustive-deps
+    return [lo - pad, hi + pad];
+  }, [shownPoints, fit, pivotTs, edges, n]); // eslint-disable-line react-hooks/exhaustive-deps
   const py = (v) => PY0 + ((yHi - v) / (yHi - yLo)) * (PY1 - PY0);
   const ybar = fit ? fit.ybar : (yLo + yHi) / 2;
 
