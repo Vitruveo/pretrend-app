@@ -14,6 +14,6 @@ export function fmtAbs(v, market, decimals = 1) {
 }
 
 export function fmtPulse(v, market) {
-  if (market.unit === 'usd') return v.toLocaleString('en-US', { maximumFractionDigits: 0 });
-  return v.toFixed(1);
+  const num = market.unit === 'usd' ? v.toLocaleString('en-US', { maximumFractionDigits: 0 }) : v.toFixed(1);
+  return market.unitLabel ? `${num} ${market.unitLabel}` : num;
 }

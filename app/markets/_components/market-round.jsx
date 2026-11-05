@@ -147,6 +147,18 @@ export function MarketRound({ market, win, thresholds, call, result, canCall, on
     return out;
   })();
 
+  // Piecewise-linear projection of a trendAbs value onto the stacked strip boxes, so the dashed line
+  // and the viewer's line always enter the box of the bucket they resolve to.
+  const stripYOf = (t) => {
+    const c = Math.max(edges[0], Math.min(edges[5], t));
+    let i = 0;
+    while (i < 4 && c >= edges[i + 1]) i++;
+    const frac = (c - edges[i]) / (edges[i + 1] - edges[i]);
+    const [top, bottom] = stripBoxes[i];
+    return bottom - frac * (bottom - top);
+  };
+  const userTrend = b * (n - 1);
+
   const canPick = !settled && canCall && phase === 'open';
   const showAim = settled ? call !== null && call !== undefined : aimBucket >= 0;
   const choose = (i) => {
@@ -288,13 +300,13 @@ export function MarketRound({ market, win, thresholds, call, result, canCall, on
           {withStrip && fit && (
             <>
               {thresholds.map((t, i) => (
-                <line key={`rg${i}`} x1={PX1} y1={rayY(t, viewEnd)} x2={BX0} y2={rayY(t, tsAtX(BX0))} stroke="rgba(238,243,251,0.16)" strokeWidth="1" />
+                <line key={`rg${i}`} x1={PX1} y1={rayY(t, viewEnd)} x2={BX0} y2={stripBoxes[i][0]} stroke="rgba(238,243,251,0.16)" strokeWidth="1" />
               ))}
               <line
                 x1={PX1}
                 y1={py(fit.a + fit.b * (viewEnd - refStart))}
                 x2={BX0 - 2}
-                y2={py(fit.a + fit.b * (tsAtX(BX0 - 2) - refStart))}
+                y2={liveTrend === null ? py(fit.a + fit.b * (viewEnd - refStart)) : stripYOf(liveTrend)}
                 stroke={settled ? '#eef3fb' : liveLineColor}
                 strokeWidth="2.5"
                 strokeDasharray="5 6"
@@ -346,7 +358,7 @@ export function MarketRound({ market, win, thresholds, call, result, canCall, on
                   x1={PX1}
                   y1={py(userA + b * (viewEnd - refStart))}
                   x2={BX0 - 2}
-                  y2={py(userA + b * (tsAtX(BX0 - 2) - refStart))}
+                  y2={stripYOf(userTrend)}
                   stroke={EMBER}
                   strokeWidth="2.5"
                   opacity="0.9"
@@ -388,10 +400,10 @@ export function MarketRound({ market, win, thresholds, call, result, canCall, on
           </text>
 
           <text x={PX0 - 8} y={PY0 + 6} textAnchor="end" fill="rgba(255,255,255,0.45)" fontSize="13" fontFamily={FONT}>
-            {yHi.toFixed(decimals)}
+            {yHi.toFixed(decimals)}{market.unitLabel ? ` ${market.unitLabel}` : ''}
           </text>
           <text x={PX0 - 8} y={PY1} textAnchor="end" fill="rgba(255,255,255,0.45)" fontSize="13" fontFamily={FONT}>
-            {yLo.toFixed(decimals)}
+            {yLo.toFixed(decimals)}{market.unitLabel ? ` ${market.unitLabel}` : ''}
           </text>
         </svg>
       ))}
