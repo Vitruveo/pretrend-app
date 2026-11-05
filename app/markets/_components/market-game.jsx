@@ -8,6 +8,7 @@ import { MarketRound } from './market-round';
 import { MarketTicker } from './market-ticker';
 import { MarketRulebook } from './market-rulebook';
 import { fmtAbs, fmtUtc } from './market-format';
+import { useGeo } from './geo';
 
 const RECENT = 8;
 
@@ -89,6 +90,7 @@ export function MarketGame({ market }) {
   const [resultFor, setResultFor] = useState(null); // window start whose result is shown or awaited
   const [recent, setRecent] = useState([]);
 
+  const geo = useGeo();
   const win = useLiveWindow(market, live);
   const thresholds = (windowInfo && windowInfo.start === win?.start ? windowInfo.thresholds : null) || live?.thresholds || market.fallbackThresholds;
   const call = win ? calls[win.start] ?? null : null;
@@ -165,7 +167,7 @@ export function MarketGame({ market }) {
             thresholds={result?.thresholds || thresholds}
             call={result ? calls[result.start] ?? null : call}
             result={result}
-            canCall
+            canCall={geo.allowed}
             onCall={onCall}
             onDismiss={dismiss}
           />
@@ -176,7 +178,9 @@ export function MarketGame({ market }) {
         )}
         <div className="ptm-section d-flex justify-content-between align-items-center flex-wrap gap-2">
           <span className="ptm-faint small">
-            Calls are free and stay in this browser. Stakes, settlement and the leaderboard come with the next step of the protocol.
+            {geo.allowed
+              ? 'Calls are free and stay in this browser. Stakes, settlement and the leaderboard come with the next step of the protocol.'
+              : 'Market features are switched off for your country. The live market and its results stay visible.'}
           </span>
           <a href="#rulebook" className="ptm-btn ptm-btn-ghost">Rulebook</a>
         </div>

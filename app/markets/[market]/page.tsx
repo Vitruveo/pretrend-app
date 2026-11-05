@@ -5,6 +5,7 @@ import Footer from '../../components/Footer';
 import { MARKETS, findMarket } from '../../config/markets';
 import { MarketView } from '../_components/market-view';
 import { MarketGame } from '../_components/market-game';
+import { GeoProvider, GeoBand } from '../_components/geo';
 import '../_components/market-game.css';
 
 export const dynamicParams = false;
@@ -28,7 +29,12 @@ export default async function MarketPage({ params }: { params: Promise<{ market:
     <>
       <Header />
       <main>
-        <section className="section-padding bg-dark-custom" style={{ paddingTop: '140px', paddingBottom: '60px' }}>
+        <GeoProvider>
+        {/* the fixed nav is about 70px tall; the band sits directly under it, full width */}
+        <div className="bg-dark-custom" style={{ paddingTop: '72px' }}>
+          <GeoBand />
+        </div>
+        <section className="section-padding bg-dark-custom" style={{ paddingTop: '48px', paddingBottom: '60px' }}>
           <div className="container" style={{ maxWidth: m.game ? '1100px' : '960px' }}>
             <div className="text-center mb-5">
               <p className="text-white-50 mb-2" style={{ letterSpacing: '0.12em', textTransform: 'uppercase', fontSize: '0.8rem' }}>
@@ -44,6 +50,7 @@ export default async function MarketPage({ params }: { params: Promise<{ market:
             {m.game ? <MarketGame market={m} /> : <MarketView market={m} />}
           </div>
         </section>
+        </GeoProvider>
       </main>
       <Footer />
     </>

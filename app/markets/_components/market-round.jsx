@@ -444,6 +444,8 @@ export function MarketRound({ market, win, thresholds, call, result, canCall, on
             {liveBucket >= 0 ? <> &middot; in <span style={{ color: liveLineColor, fontWeight: 600 }}>{BUCKET_NAMES[liveBucket]}</span></> : null}
             {called ? (
               <> &middot; your call <span style={{ color: EMBER, fontWeight: 600 }}>{BUCKET_NAMES[call]}</span>{phase === 'open' ? ' (click another bucket to change it)' : ''}</>
+            ) : !canCall ? (
+              <> &middot; calls are not available in your country</>
             ) : phase === 'open' ? (
               <> &middot; click the bucket the trend will settle in</>
             ) : (
@@ -455,7 +457,7 @@ export function MarketRound({ market, win, thresholds, call, result, canCall, on
 
       {settled && (
         <div className="d-flex justify-content-center mt-3">
-          <button type="button" className="ptm-btn ptm-btn-ghost" onClick={onDismiss}>Back to live</button>
+          <button type="button" className="ptm-btn ptm-btn-ghost" onClick={onDismiss} disabled={!canCall}>Back to live</button>
         </div>
       )}
 
