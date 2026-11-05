@@ -192,7 +192,7 @@ export function MarketRound({ market, win, thresholds, call, result, canCall, on
           <span style={{ color: SIGNAL }}>{market.feedName}</span> &middot; market {fmtUtc(refStart)} &middot;{' '}
           {settled ? `${shownPoints.length} points` : `second ${Math.min(n, Math.floor(elapsed))} / ${n}`}
         </span>
-        <span className="ptm-faint">{phaseText}</span>
+        <span className="ptm-ink fw-bold" style={{ fontSize: '1.25rem', letterSpacing: '0.03em', fontVariantNumeric: 'tabular-nums' }}>{phaseText}</span>
       </div>
 
       {[

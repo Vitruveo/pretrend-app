@@ -1,6 +1,24 @@
 'use client';
 
 import { createContext, useContext, useEffect, useMemo, useState } from 'react';
+
+// Live UTC clock, HH:MM:SS, ticking once a second after mount (never rendered on the server).
+function UtcClock() {
+  const [now, setNow] = useState(null);
+  useEffect(() => {
+    const tick = () => setNow(new Date());
+    tick();
+    const id = setInterval(tick, 1000);
+    return () => clearInterval(id);
+  }, []);
+  if (!now) return <span style={{ fontVariantNumeric: 'tabular-nums' }}>--:--:-- UTC</span>;
+  const p = (x) => String(x).padStart(2, '0');
+  return (
+    <span style={{ fontVariantNumeric: 'tabular-nums' }}>
+      {p(now.getUTCHours())}:{p(now.getUTCMinutes())}:{p(now.getUTCSeconds())} UTC
+    </span>
+  );
+}
 import { isRestricted } from '../../config/geo';
 
 const GeoContext = createContext({ loading: true, country: null, name: null, flag: null, allowed: false, source: null });
@@ -84,10 +102,13 @@ export function GeoBand() {
         : 'Features not available in your country.';
   return (
     <div role="status" style={{ background: tone, borderTop: `1px solid ${edge}`, borderBottom: `1px solid ${edge}` }}>
-      <div className="container d-flex align-items-center justify-content-center flex-wrap gap-3 py-2" style={{ maxWidth: '1100px' }}>
-        <span style={{ fontSize: '1.5rem', lineHeight: 1 }} aria-hidden="true">{geo.flag}</span>
-        <span className="fw-bold text-white" style={{ letterSpacing: '0.04em' }}>{geo.name || (geo.loading ? '' : 'Unknown')}</span>
-        <span className="text-white-50">{text}</span>
+      <div className="container d-flex align-items-center justify-content-between flex-wrap gap-3 py-2" style={{ maxWidth: '1100px' }}>
+        <span className="d-flex align-items-center gap-3">
+          <span style={{ fontSize: '1.5rem', lineHeight: 1 }} aria-hidden="true">{geo.flag}</span>
+          <span className="fw-bold text-white" style={{ letterSpacing: '0.04em' }}>{geo.name || (geo.loading ? '' : 'Unknown')}</span>
+          <span className="text-white-50">{text}</span>
+        </span>
+        <span className="text-white fw-bold" style={{ letterSpacing: '0.08em' }}><UtcClock /></span>
       </div>
     </div>
   );
