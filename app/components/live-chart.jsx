@@ -1,0 +1,107 @@
+// Shared live chart: timestamp-aware OLS fit over [ts, value] pairs, rendered as SVG.
+// Used by the TrendPulse status page and the market cards.
+
+// timestamp-aware OLS over [ts, value] pairs
+export function tsOls(points) {
+  const n = points.length;
+  if (n < 2) return null;
+  const t0 = points[0][0];
+  let xbar = 0;
+  let ybar = 0;
+  for (const [ts, v] of points) { xbar += ts - t0; ybar += v; }
+  xbar /= n;
+  ybar /= n;
+  let sxx = 0;
+  let sxy = 0;
+  for (const [ts, v] of points) {
+    const dx = ts - t0 - xbar;
+    sxx += dx * dx;
+    sxy += dx * (v - ybar);
+  }
+  if (sxx === 0) return null;
+  const b = sxy / sxx;
+  const a = ybar - b * xbar;
+  const span = points[n - 1][0] - t0;
+  return { y0: a, y1: a + b * span, trendPct: ((b * span) / a) * 100 };
+}
+
+export function fmtValue(v, unit) {
+  if (unit === 'tone') return `${v >= 0 ? '+' : ''}${v.toFixed(3)}`;
+  if (unit === 'celsius') return `${v.toFixed(1)}\u00b0C`;
+  if (unit === 'bnb') return `${v.toLocaleString('en-US', { maximumFractionDigits: 1 })} BNB`;
+  if (unit === 'txs') return `${v.toLocaleString('en-US', { maximumFractionDigits: 0 })} txs`;
+  if (unit === 'momentum') return v.toFixed(1);
+  if (unit === 'sol') return `${v.toLocaleString('en-US', { maximumFractionDigits: 2 })} SOL`;
+  return `$${v.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+}
+
+export function fmtTime(ts) {
+  const d = new Date(ts * 1000);
+  return `${String(d.getUTCHours()).padStart(2, '0')}:${String(d.getUTCMinutes()).padStart(2, '0')}`;
+}
+
+const FONT = "'Titillium Web',sans-serif";
+
+export function LiveChart({ label, name, points, unit, windowLabel, trendMode, color = '#63a83a', labelColor = '#a3d97a', trendColor = '#2f8fd6', headlineColor = 'rgba(255,255,255,0.7)' }) {
+  const W = 720;
+  const H = 300;
+  const X0 = 60;
+  const X1 = 690;
+  const Y0 = 25;
+  const Y1 = 255;
+
+  if (!points || points.length < 2) {
+    return (
+      <div className="text-muted-custom small py-5 text-center">Waiting for data&hellip;</div>
+    );
+  }
+
+  const fit = tsOls(points);
+  const values = points.map((p) => p[1]);
+  let lo = Math.min(...values);
+  let hi = Math.max(...values);
+  const pad = Math.max((hi - lo) * 0.1, hi * 0.0002);
+  lo -= pad;
+  hi += pad;
+  const tMin = points[0][0];
+  const tMax = points[points.length - 1][0];
+  const px = (ts) => X0 + ((X1 - X0) * (ts - tMin)) / Math.max(tMax - tMin, 1);
+  const py = (v) => Y0 + ((hi - v) / (hi - lo)) * (Y1 - Y0);
+  const line = points.map((p) => `${px(p[0]).toFixed(1)},${py(p[1]).toFixed(1)}`).join(' ');
+  const last = points[points.length - 1];
+
+  return (
+    <svg viewBox={`0 0 ${W} ${H}`} role="img" aria-label={`${name} over the chart window with its OLS trend`} style={{ width: '100%', height: 'auto', display: 'block' }}>
+      <line x1={X0} y1={Y1} x2={X1} y2={Y1} stroke="rgba(255,255,255,0.18)" strokeWidth="1" />
+      <polyline points={line} fill="none" stroke={color} strokeWidth="2" strokeLinejoin="round" strokeLinecap="round" />
+      {fit && (
+        <line
+          x1={px(tMin)}
+          y1={py(fit.y0).toFixed(1)}
+          x2={px(tMax)}
+          y2={py(fit.y1).toFixed(1)}
+          stroke={trendColor}
+          strokeWidth="2"
+          strokeDasharray="6 5"
+        />
+      )}
+      <circle cx={px(last[0]).toFixed(1)} cy={py(last[1]).toFixed(1)} r="3.5" fill={color} stroke="#0a0f0a" strokeWidth="1.5" />
+      <text x={px(last[0]) - 9} y={(py(last[1]) - 10).toFixed(1)} textAnchor="end" fill={labelColor} fontSize="13" fontWeight="600" fontFamily={FONT} stroke="#0a0f0a" strokeWidth="3" paintOrder="stroke" style={{ fontVariantNumeric: 'tabular-nums' }}>
+        {fmtValue(last[1], unit)}
+      </text>
+      <text x={X0} y={16} fill={headlineColor} fontSize="13" fontWeight="600" fontFamily={FONT}>
+        {name} <tspan fill="rgba(255,255,255,0.4)" fontWeight="400">{label}</tspan>
+      </text>
+      {fit && (
+        <text x={X1} y={16} textAnchor="end" fill={trendColor} fontSize="12" fontFamily={FONT}>
+          {windowLabel} OLS trend: {trendMode === 'abs'
+            ? `${fit.y1 - fit.y0 >= 0 ? '+' : ''}${(fit.y1 - fit.y0).toFixed(unit === 'celsius' || unit === 'bnb' || unit === 'momentum' || unit === 'sol' ? 1 : unit === 'txs' ? 0 : 3)}${unit === 'celsius' ? '\u00b0C' : unit === 'bnb' ? ' BNB' : unit === 'sol' ? ' SOL' : unit === 'txs' ? ' txs' : ''}`
+            : `${fit.trendPct >= 0 ? '+' : ''}${fit.trendPct.toFixed(3)}%`}
+        </text>
+      )}
+      <text x={X0} y={275} fill="rgba(255,255,255,0.5)" fontSize="11" fontFamily={FONT}>{fmtTime(tMin)} UTC</text>
+      <text x={X1} y={275} textAnchor="end" fill="rgba(255,255,255,0.5)" fontSize="11" fontFamily={FONT}>{fmtTime(tMax)} UTC</text>
+    </svg>
+  );
+}
+

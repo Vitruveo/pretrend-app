@@ -9,6 +9,12 @@ export const metadata: Metadata = {
 
 const sections = [
   {
+    href: '/protocol',
+    title: 'Protocol',
+    body: 'The protocol overview: continuous trend resolution, five graded buckets, Timeslope pricing, the AIWars Trends launch and the roadmap.',
+    cta: 'Read the Protocol',
+  },
+  {
     href: '/whitepaper',
     title: 'Whitepaper',
     body: 'The full specification: system architecture, oracle design, Timeslope pricing, marketplace mechanics, fees, and security model.',

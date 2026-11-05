@@ -1,0 +1,58 @@
+// Pretrend markets listed on the Trends home page and served under /markets/{slug}.
+// Each market reads one TrendPulse source; the window is the market's game length.
+
+export const MARKETS = [
+  {
+    slug: 'pumpfun-5',
+    name: 'pump.fun 5',
+    headline: 'pump.fun Buy Volume, 5-minute markets',
+    source: 'pumpfun-buys',
+    unit: 'sol',
+    windowS: 5 * 60,
+    windowLabel: '5-min',
+    trendMode: 'abs',
+    readOnly: false,
+    color: '#4cc38a',
+    labelColor: '#9be7bf',
+    trendColor: '#e8c547',
+    headlineColor: '#3fd68f',
+    desc: 'SOL spent buying pump.fun coins still on their bonding curve, summed every two seconds. Five minutes per market: predict whether memecoin demand on Solana trends up, down or flat, in five graded buckets.',
+    dataCadence: 'every 2 seconds',
+    attribution: 'Solana RPC (pump.fun program logs)',
+    cta: 'Open pump.fun 5',
+  },
+  {
+    slug: 'bitcoin-30',
+    name: 'Bitcoin 30',
+    headline: 'Bitcoin, 30-minute markets',
+    source: 'btcusdt',
+    unit: 'usd',
+    windowS: 30 * 60,
+    windowLabel: '30-min',
+    trendMode: 'pct',
+    readOnly: true,
+    desc: 'BTC against USDT, sampled every five seconds from a continuous exchange stream. Thirty minutes per market, resolved on the OLS trend of the window. Read-only: watch the markets resolve while the protocol is finalized.',
+    dataCadence: 'every 5 seconds',
+    attribution: 'Binance',
+    cta: 'Watch Bitcoin 30',
+  },
+  {
+    slug: 'ethereum-30',
+    name: 'Ethereum 30',
+    headline: 'Ethereum, 30-minute markets',
+    source: 'ethusdt',
+    unit: 'usd',
+    windowS: 30 * 60,
+    windowLabel: '30-min',
+    trendMode: 'pct',
+    readOnly: true,
+    desc: 'ETH against USDT, sampled identically to the Bitcoin feed. Thirty minutes per market, resolved on the OLS trend of the window. Read-only: watch the markets resolve while the protocol is finalized.',
+    dataCadence: 'every 5 seconds',
+    attribution: 'Binance',
+    cta: 'Watch Ethereum 30',
+  },
+];
+
+export function findMarket(slug) {
+  return MARKETS.find((m) => m.slug === slug) || null;
+}

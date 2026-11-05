@@ -20,6 +20,7 @@ export default function Footer({ disclaimer }: { disclaimer?: string }) {
               anchors, which otherwise renders one unbreakable 500px+ line that
               forces horizontal overflow on phones. */}
           <div className="col-md-6 d-flex flex-wrap justify-content-center justify-content-md-end column-gap-4 row-gap-2">
+            <a href="/protocol">Protocol</a>
             <a href="/about">About</a>
             <a href="/whitepaper">Whitepaper</a>
             <a href="/ols">OLS</a>
