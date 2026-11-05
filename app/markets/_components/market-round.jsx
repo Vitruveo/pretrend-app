@@ -74,9 +74,10 @@ export function MarketRound({ market, win, thresholds, call, result, canCall, on
   // across the plot, the strip boxes are the cone's own geometry, and every line stays straight.
   const [yLo, yHi] = useMemo(() => {
     if (shownPoints.length < 2) return [0, 100];
-    let lo = Infinity;
-    let hi = -Infinity;
-    for (const [, v] of shownPoints) { if (v < lo) lo = v; if (v > hi) hi = v; }
+    // the data's 2nd to 98th percentile: a few spikes must not shrink the bucket cone to a sliver
+    const sorted = shownPoints.map((p) => p[1]).sort((a, b) => a - b);
+    let lo = sorted[Math.floor(0.02 * (sorted.length - 1))];
+    let hi = sorted[Math.ceil(0.98 * (sorted.length - 1))];
     if (fit) {
       const dx = tsAtX(BX0) - pivotTs;
       const coneLo = fit.ybar + (edges[0] / (n - 1)) * dx;
@@ -129,10 +130,12 @@ export function MarketRound({ market, win, thresholds, call, result, canCall, on
   // The side strip continues the cone exactly: box edges are where the rays reach the strip, so the
   // dashed line runs straight into its bucket. The y range above keeps the cone inside the plot.
   const clampY = (y) => Math.max(PY0, Math.min(PY1, y));
+  // Box i spans edges[i]..edges[i+1] at the strip, outer boxes included, so equal edges give five
+  // boxes of exactly the same height.
   const stripBoxes = BUCKET_NAMES.map((_, i) => {
     if (!fit) return boxes[i];
-    const top = i === 4 ? PY0 : clampY(rayY(thresholds[i], tsAtX(BX0)));
-    const bottom = i === 0 ? PY1 : clampY(rayY(thresholds[i - 1], tsAtX(BX0)));
+    const top = clampY(rayY(edges[i + 1], tsAtX(BX0)));
+    const bottom = clampY(rayY(edges[i], tsAtX(BX0)));
     return [top, bottom];
   });
 
