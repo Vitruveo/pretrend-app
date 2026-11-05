@@ -2,8 +2,9 @@
 
 import { ConnectButton } from '@rainbow-me/rainbowkit';
 
-// Custom-rendered connect button so it matches the nav styling instead of
-// RainbowKit's default bold 16px pill. Modals are still RainbowKit's.
+// Custom-rendered connect button so it matches the nav styling instead of RainbowKit's default bold
+// pill. Modals are still RainbowKit's. The chain chip carries the network's icon (Vitruveo's mark
+// from public/vitruveo.svg, BNB Chain's from RainbowKit).
 export default function ConnectWallet() {
   const style = { fontSize: '0.85rem', fontWeight: 400, whiteSpace: 'nowrap' } as const;
 
@@ -19,7 +20,7 @@ export default function ConnectWallet() {
             })}
           >
             {!connected ? (
-              <button type="button" className="btn btn-outline-light btn-sm" style={style} onClick={openConnectModal}>
+              <button type="button" className="btn btn-outline-light btn-sm px-3" style={style} onClick={openConnectModal}>
                 Connect
               </button>
             ) : chain.unsupported ? (
@@ -40,16 +41,11 @@ export default function ConnectWallet() {
                   onClick={openChainModal}
                   title="Switch network"
                 >
-                  <span
-                    aria-hidden="true"
-                    style={{
-                      width: '0.5rem',
-                      height: '0.5rem',
-                      borderRadius: '50%',
-                      background: chain.id === 1490 ? '#8b5cf6' : chain.id === 56 ? '#f0b90b' : '#8fa0ba',
-                      boxShadow: chain.id === 1490 ? '0 0 8px rgba(139,92,246,0.85)' : chain.id === 56 ? '0 0 8px rgba(240,185,11,0.7)' : 'none',
-                    }}
-                  />
+                  {chain.iconUrl ? (
+                    <img src={chain.iconUrl} alt="" aria-hidden="true" width={16} height={16} style={{ width: '16px', height: '16px', borderRadius: '50%', background: chain.iconBackground }} />
+                  ) : (
+                    <span aria-hidden="true" style={{ width: '0.5rem', height: '0.5rem', borderRadius: '50%', background: '#8fa0ba' }} />
+                  )}
                   {chain.id === 56 ? 'BNB Chain' : chain.name}
                 </button>
                 <button type="button" className="btn btn-outline-light btn-sm" style={style} onClick={openAccountModal}>

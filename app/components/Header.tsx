@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react';
 import { usePathname } from 'next/navigation';
 import dynamic from 'next/dynamic';
 
-// Wallet connect button is only loaded/rendered on the validator app page.
+// RainbowKit connect button, client-only (wallet state has no server render).
 const ConnectWallet = dynamic(() => import('../web3/ConnectWallet'), { ssr: false });
 
 export default function Header() {
@@ -14,9 +14,6 @@ export default function Header() {
   const pathname = usePathname();
   const cleanPath = pathname?.replace(/\/+$/, '') ?? '';
   const isAbout = ['/about', '/protocol', '/whitepaper', '/ols', '/examples'].includes(cleanPath);
-  // trailingSlash: true → usePathname() returns "/validators/"
-  // Pages listed here must wrap Header in a wagmi/RainbowKit provider.
-  const showConnect = ['/validators'].includes(cleanPath);
 
   useEffect(() => {
     const onScroll = () => setScrolled(window.scrollY > 50);
@@ -88,15 +85,10 @@ export default function Header() {
             <li className="nav-item" onClick={() => setMenuOpen(false)}>
               <a className="nav-link" href="/trendpulse">TrendPulse</a>
             </li>
-            <li className="nav-item d-flex align-items-center" onClick={() => setMenuOpen(false)}>
-              <a href="https://www.epicaiwars.com/trends" className="btn btn-signal btn-sm px-3">AIWars Trends</a>
-            </li>
           </ul>
-          {showConnect && (
-            <div className="ms-md-4 mt-3 mt-md-0">
-              <ConnectWallet />
-            </div>
-          )}
+          <div className="ms-md-4 mt-3 mt-md-0">
+            <ConnectWallet />
+          </div>
         </div>
       </div>
     </nav>
