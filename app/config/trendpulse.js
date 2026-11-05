@@ -72,18 +72,6 @@ export const TRENDPULSE_SOURCES = [
     attribution: 'Binance',
   },
   {
-    key: 'gdelt-tone',
-    label: 'GDELT · GLOBAL NEWS TONE',
-    name: 'World News Sentiment',
-    unit: 'tone',
-    windowS: 24 * 3600,
-    windowLabel: '24-hour',
-    trendMode: 'abs',
-    desc: 'The average sentiment of world news: mean document tone across every article GDELT processes globally, in 65 languages, per publication window. Below zero means the world’s news skews negative.',
-    dataCadence: 'every 15 minutes',
-    attribution: 'GDELT Project',
-  },
-  {
     key: 'nyc-temp',
     label: 'NYC · TEMPERATURE',
     name: 'New York City Temperature',
