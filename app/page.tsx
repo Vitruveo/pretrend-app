@@ -6,7 +6,7 @@ import LaunchCountdown from './components/LaunchCountdown';
 
 export const metadata: Metadata = {
   title: "Trends | Pretrend",
-  description: "Pretrend markets, live: pump.fun buy volume in 5-minute markets, Bitcoin and Ethereum in 30-minute markets, each resolved on the OLS trend of its window.",
+  description: "Pretrend markets, live: pump.fun buy volume in 5-minute markets, Bitcoin in 15-minute markets, Ethereum in 30-minute markets, each resolved on the OLS trend of its window.",
 };
 
 export default function TrendsPage() {
