@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useMemo, useState } from 'react';
-import { BUCKET_NAMES, bucketRgba, bucketOf, stripEdges, trendAbsOf, rulesFor } from '../_lib/gamemath';
+import { BUCKET_NAMES, bucketRgba, bucketOf, stripEdges, trendAbsOf, rulesFor, stripBoxLayout, checkStripBoxes, trendToStripY } from '../_lib/gamemath';
 import { fmtAbs, fmtClock, fmtUtc } from './market-format';
 
 // Chart geometry
@@ -62,7 +62,6 @@ export function MarketRound({ market, win, thresholds, call, result, canCall, on
   // x is an absolute timestamp
   const px = (ts) => PX0 + ((PX1 - PX0) * (ts - viewStart)) / (n - 1);
   const inView = (ts) => ts >= viewStart && ts <= viewEnd;
-  const tsAtX = (x) => viewStart + ((x - PX0) / (PX1 - PX0)) * (n - 1);
 
   // The live fit of the points seen so far (or the settled fit).
   const fit = settled ? result.fit : win.liveFit;
@@ -70,69 +69,61 @@ export function MarketRound({ market, win, thresholds, call, result, canCall, on
   const pivotTs = refStart + xbar;
   const edges = stripEdges(thresholds);
 
-  // Y range: the points shown AND the bucket cone where it reaches the strip, so the rays spread
-  // across the plot, the strip boxes are the cone's own geometry, and every line stays straight.
-  const [yLo, yHi] = useMemo(() => {
+  // Five boxes filling the strip top to bottom at fixed shares (STRIP_SHARES); index matches
+  // BUCKET_NAMES (0 = Crash bottom ... 4 = Moon top).
+  const boxes = stripBoxLayout(PY0, PY1);
+  const stripBoxes = boxes;
+  const stripError = checkStripBoxes(stripBoxes, PY0, PY1);
+  useEffect(() => {
+    if (stripError) console.error('[markets] bucket strip layout error:', stripError, stripBoxes);
+  }, [stripError]); // eslint-disable-line react-hooks/exhaustive-deps
+  // Height on the strip where a window trend lands; zero trend is the level of the pivot.
+  const yZero = trendToStripY(0, stripBoxes, edges);
+
+  // Y range: every point shown, nothing cut off. With a fit, the fit's mean sits level with zero trend
+  // on the strip so a flat trend draws flat, and the scale is the largest that keeps all points in view.
+  const [yLo, yHi] = (() => {
     if (shownPoints.length < 2) return [0, 100];
-    // the data's 2nd to 98th percentile: a few spikes must not shrink the bucket cone to a sliver
-    const sorted = shownPoints.map((p) => p[1]).sort((a, b) => a - b);
-    let lo = sorted[Math.floor(0.02 * (sorted.length - 1))];
-    let hi = sorted[Math.ceil(0.98 * (sorted.length - 1))];
+    let lo = Infinity;
+    let hi = -Infinity;
+    for (const [, v] of shownPoints) { if (v < lo) lo = v; if (v > hi) hi = v; }
     if (fit) {
-      const dx = tsAtX(BX0) - pivotTs;
-      const coneLo = fit.ybar + (edges[0] / (n - 1)) * dx;
-      const coneHi = fit.ybar + (edges[5] / (n - 1)) * dx;
-      lo = Math.min(lo, coneLo, coneHi);
-      hi = Math.max(hi, coneLo, coneHi);
+      const up = Math.max(hi - fit.ybar, 0);
+      const down = Math.max(fit.ybar - lo, 0);
+      const ks = [];
+      if (up > 0) ks.push((yZero - PY0) / up);
+      if (down > 0) ks.push((PY1 - yZero) / down);
+      const k = (ks.length ? Math.min(...ks) : 1) * 0.96; // pixels per unit
+      return [fit.ybar - (PY1 - yZero) / k, fit.ybar + (yZero - PY0) / k];
     }
-    // no floor or ceiling from the pulse's own bounds: the bucket cone must never be cut off, and it
-    // reaches below zero whenever the trend range is wider than the level
-    const pad = Math.max((hi - lo) * 0.08, Math.abs(hi) * 0.01, 1e-6);
+    const pad = Math.max((hi - lo) * 0.04, Math.abs(hi) * 0.01, 1e-6);
     return [lo - pad, hi + pad];
-  }, [shownPoints, fit, pivotTs, edges, n]); // eslint-disable-line react-hooks/exhaustive-deps
+  })();
   const py = (v) => PY0 + ((yHi - v) / (yHi - yLo)) * (PY1 - PY0);
   const ybar = fit ? fit.ybar : (yLo + yHi) / 2;
 
-  // The viewer's line: the slope whose window trend is the middle of their bucket, through the pivot.
-  const aimBucket = call !== null && call !== undefined ? call : pick === null ? -1 : pick;
-  const b = aimBucket >= 0 ? (edges[aimBucket] + edges[aimBucket + 1]) / 2 / (n - 1) : 0;
-  const userA = ybar - b * xbar;
   // Live reading = where the window settles if the current slope holds, i.e. the slope projected
   // over the full window (the settled fit's trendAbs already spans the window).
   const liveTrend = fit ? (settled ? fit.trendAbs : trendAbsOf(fit.b, n)) : null;
   const liveBucket = liveTrend === null ? -1 : bucketOf(liveTrend, thresholds);
   const trueBucket = settled && !result.void ? result.bucket : -1;
+  // The viewer's call: the middle of their bucket.
+  const aimBucket = call !== null && call !== undefined ? call : pick === null ? -1 : pick;
 
-  // Five equal boxes; index matches BUCKET_NAMES (0 = Crash bottom ... 4 = Moon top).
-  const BOX_H = (PY1 - PY0) / 5;
-  const boxes = Array.from({ length: 5 }, (_, i) => [PY1 - (i + 1) * BOX_H, PY1 - i * BOX_H]);
-
-  // Trend cone: each threshold is a ray through the fit's pivot with that trend's slope; the wedges
-  // between rays are the buckets, drawn from the pivot to the right edge so the dashed line visibly
-  // sits in its bucket.
-  const rayY = (t, ts) => py(ybar + (t / (n - 1)) * (ts - pivotTs));
-  const coneX0 = Math.max(PX0, px(pivotTs));
-  const coneTs0 = Math.max(viewStart, pivotTs);
+  // Every line is one straight line through the pivot (the fit's mean) to its height on the strip: the
+  // four threshold rays end on the box boundaries, the dashed trend line where its trend lands, the
+  // viewer's line in the middle of their box.
+  const pivotX = px(pivotTs);
+  const pivotY = py(ybar);
+  const lineY = (targetY, x) => pivotY + ((targetY - pivotY) * (x - pivotX)) / (BX0 - pivotX);
+  const rayTarget = (i) => stripBoxes[i][0]; // boundary between box i and box i + 1
+  const liveTarget = liveTrend === null ? yZero : trendToStripY(liveTrend, stripBoxes, edges);
+  const aimTarget = aimBucket >= 0 ? (stripBoxes[aimBucket][0] + stripBoxes[aimBucket][1]) / 2 : yZero;
+  const coneX0 = Math.max(PX0, pivotX);
   const wedges = BUCKET_NAMES.map((_, i) => {
-    const hiT = i === 4 ? null : thresholds[i];
-    const loT = i === 0 ? null : thresholds[i - 1];
-    const yTopEnd = hiT === null ? PY0 : rayY(hiT, viewEnd);
-    const yBotEnd = loT === null ? PY1 : rayY(loT, viewEnd);
-    const yTop0 = hiT === null ? PY0 : rayY(hiT, coneTs0);
-    const yBot0 = loT === null ? PY1 : rayY(loT, coneTs0);
-    return `${coneX0},${yTop0} ${PX1},${yTopEnd} ${PX1},${yBotEnd} ${coneX0},${yBot0}`;
-  });
-
-  // The side strip continues the cone exactly: box edges are where the rays reach the strip, so the
-  // dashed line runs straight into its bucket. The y range above keeps the cone inside the plot.
-  const clampY = (y) => Math.max(PY0, Math.min(PY1, y));
-  // Box i spans edges[i]..edges[i+1] at the strip, outer boxes included, so equal edges give five
-  // boxes of exactly the same height.
-  const stripBoxes = BUCKET_NAMES.map((_, i) => {
-    if (!fit) return boxes[i];
-    const top = clampY(rayY(edges[i + 1], tsAtX(BX0)));
-    const bottom = clampY(rayY(edges[i], tsAtX(BX0)));
-    return [top, bottom];
+    const top = (x) => (i === 4 ? PY0 : lineY(rayTarget(i), x));
+    const bot = (x) => (i === 0 ? PY1 : lineY(rayTarget(i - 1), x));
+    return `${coneX0},${top(coneX0)} ${PX1},${top(PX1)} ${PX1},${bot(PX1)} ${coneX0},${bot(coneX0)}`;
   });
 
   const canPick = !settled && canCall && phase === 'open';
@@ -227,12 +218,15 @@ export function MarketRound({ market, win, thresholds, call, result, canCall, on
                 <polygon key={`w${i}`} points={pts} fill={bucketRgba(i, isLive(i) ? 0.28 : isPick(i) ? 0.16 : 0.09)} />
               ))}
               {thresholds.map((t, i) => (
-                <line key={`r${i}`} x1={PX0} y1={rayY(t, viewStart)} x2={PX1} y2={rayY(t, viewEnd)} stroke="rgba(238,243,251,0.22)" strokeWidth="1" />
+                <line key={`r${i}`} x1={PX0} y1={lineY(rayTarget(i), PX0)} x2={PX1} y2={lineY(rayTarget(i), PX1)} stroke="rgba(238,243,251,0.22)" strokeWidth="1" />
               ))}
             </g>
           )}
 
           {/* outcome buckets: side strip on wide screens only */}
+          {withStrip && stripError && (
+            <text x={(BX0 + BX1) / 2} y={PY0 - 6} textAnchor="middle" fill="#ef4444" fontSize="12" fontFamily={FONT}>STRIP LAYOUT ERROR</text>
+          )}
           {withStrip && BUCKET_NAMES.map((name, i) => {
             const [top, bottom] = stripBoxes[i];
             const h = bottom - top;
@@ -276,13 +270,13 @@ export function MarketRound({ market, win, thresholds, call, result, canCall, on
           {withStrip && fit && (
             <>
               {thresholds.map((t, i) => (
-                <line key={`rg${i}`} x1={PX1} y1={rayY(t, viewEnd)} x2={BX0} y2={rayY(t, tsAtX(BX0))} stroke="rgba(238,243,251,0.16)" strokeWidth="1" />
+                <line key={`rg${i}`} x1={PX1} y1={lineY(rayTarget(i), PX1)} x2={BX0} y2={rayTarget(i)} stroke="rgba(238,243,251,0.16)" strokeWidth="1" />
               ))}
               <line
                 x1={PX1}
-                y1={py(fit.a + fit.b * (viewEnd - refStart))}
+                y1={lineY(liveTarget, PX1)}
                 x2={BX0 - 2}
-                y2={py(fit.a + fit.b * (tsAtX(BX0 - 2) - refStart))}
+                y2={lineY(liveTarget, BX0 - 2)}
                 stroke={settled ? '#eef3fb' : liveLineColor}
                 strokeWidth="2.5"
                 strokeDasharray="5 6"
@@ -315,7 +309,7 @@ export function MarketRound({ market, win, thresholds, call, result, canCall, on
           {fit && (
             <>
               <g clipPath={`url(#ptm-plot-${id})`}>
-                <line x1={PX0} y1={py(fit.a + fit.b * (viewStart - refStart))} x2={PX1} y2={py(fit.a + fit.b * (viewEnd - refStart))} stroke={settled ? '#eef3fb' : liveLineColor} strokeWidth="2.5" strokeDasharray="5 6" />
+                <line x1={PX0} y1={lineY(liveTarget, PX0)} x2={PX1} y2={lineY(liveTarget, PX1)} stroke={settled ? '#eef3fb' : liveLineColor} strokeWidth="2.5" strokeDasharray="5 6" />
               </g>
               {inView(refStart + xbar) && (
                 <circle cx={px(refStart + xbar)} cy={py(ybar)} r="4.5" fill="none" stroke="rgba(255,255,255,0.6)" strokeWidth="1.5" />
@@ -327,14 +321,14 @@ export function MarketRound({ market, win, thresholds, call, result, canCall, on
           {showAim && fit && (
             <>
               <g clipPath={`url(#ptm-plot-${id})`}>
-                <line x1={PX0} y1={py(userA + b * (viewStart - refStart))} x2={PX1} y2={py(userA + b * (viewEnd - refStart))} stroke={EMBER} strokeWidth="2.5" />
+                <line x1={PX0} y1={lineY(aimTarget, PX0)} x2={PX1} y2={lineY(aimTarget, PX1)} stroke={EMBER} strokeWidth="2.5" />
               </g>
               {withStrip && (
                 <line
                   x1={PX1}
-                  y1={py(userA + b * (viewEnd - refStart))}
+                  y1={lineY(aimTarget, PX1)}
                   x2={BX0 - 2}
-                  y2={py(userA + b * (tsAtX(BX0 - 2) - refStart))}
+                  y2={lineY(aimTarget, BX0 - 2)}
                   stroke={EMBER}
                   strokeWidth="2.5"
                   opacity="0.9"

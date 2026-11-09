@@ -1,7 +1,7 @@
 // Server-side access to the TrendPulse oracle for a market: window series fetches and quintile
 // calibration of the bucket thresholds.
 
-import { TRENDPULSE_BASE, rulesFor, tsOls } from '../../../markets/_lib/gamemath';
+import { TRENDPULSE_BASE, rulesFor, tsOls, validThresholds } from '../../../markets/_lib/gamemath';
 import { kvGet, kvSet } from './kv';
 
 const CAL_DAYS = 3; // history used for quintiles (the oracle serves at most one day per call)
@@ -100,14 +100,21 @@ export async function getCalibration(market) {
       const raw = await kvGet(key).catch(() => null);
       if (raw) {
         const v = JSON.parse(raw);
-        memo.set(market.slug, { value: v, expiresAt: now + 60 });
-        return v;
+        if (validThresholds(v.thresholds)) {
+          memo.set(market.slug, { value: v, expiresAt: now + 60 });
+          return v;
+        }
+        console.error(`[markets] stored calibration for ${market.slug} has invalid edges; recomputing`, v.thresholds);
       }
       let v = null;
       try {
         v = await computeCalibration(market);
       } catch (e) {
         console.error(`[markets] calibration failed for ${market.slug}:`, e.message);
+      }
+      if (v && !validThresholds(v.thresholds)) {
+        console.error(`[markets] calibration for ${market.slug} produced invalid edges`, v.thresholds);
+        v = null;
       }
       if (!v) v = { thresholds: await startingThresholds(market), windows: 0, calibratedAt: null, mode: 'starting', fallback: true };
       // equal-slice edges move with every new window early on; refresh them every 5 minutes

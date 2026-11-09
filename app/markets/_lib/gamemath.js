@@ -65,6 +65,60 @@ export function trendAbsOf(b, gameS) {
   return b * (gameS - 1);
 }
 
+// Bucket edges are valid only as four finite, strictly increasing numbers. Anything else is an error,
+// never something to draw.
+export function validThresholds(t) {
+  return Array.isArray(t) && t.length === 4 && t.every((x) => Number.isFinite(x)) && t[0] < t[1] && t[1] < t[2] && t[2] < t[3];
+}
+
+// Share of the strip height per box, bottom to top: Crash, Bear, Flat, Bull, Moon. Fixed; adds up to 1.
+export const STRIP_SHARES = [0.2, 0.15, 0.15, 0.15, 0.35];
+
+// The side strip: five boxes stacked from bottom (0 = Crash) to top (4 = Moon) filling the strip from
+// top to bottom (pixel y, top < bottom) at STRIP_SHARES. Returns [[boxTop, boxBottom] x5].
+export function stripBoxLayout(top, bottom) {
+  const total = bottom - top;
+  const boxes = [];
+  let y = bottom;
+  for (let i = 0; i < 5; i++) {
+    const h = i === 4 ? y - top : total * STRIP_SHARES[i]; // the last box closes exactly at the top
+    boxes.push([y - h, y]);
+    y -= h;
+  }
+  return boxes;
+}
+
+// Checks a strip layout: five boxes stacked bottom to top without gaps or overlaps, each at its
+// STRIP_SHARES share, together 100% of the strip. Returns null when it holds, else the first violation.
+export function checkStripBoxes(boxes, top, bottom) {
+  const total = bottom - top;
+  const eps = Math.max(1e-6, total * 1e-6);
+  if (!Array.isArray(boxes) || boxes.length !== 5) return `expected 5 boxes, got ${boxes?.length}`;
+  if (!(total > 0)) return `strip height ${total} is not positive`;
+  let sum = 0;
+  for (let i = 0; i < 5; i++) {
+    const [t, b] = boxes[i];
+    const h = b - t;
+    if (!Number.isFinite(h) || Math.abs(h / total - STRIP_SHARES[i]) > 1e-6) return `box ${i} is ${((h / total) * 100).toFixed(2)}% of the strip, not ${STRIP_SHARES[i] * 100}%`;
+    const below = i === 0 ? bottom : boxes[i - 1][0];
+    if (Math.abs(b - below) > eps) return `box ${i} does not sit on the box below it`;
+    sum += h;
+  }
+  if (Math.abs(sum - total) > eps) return `boxes add up to ${((sum / total) * 100).toFixed(2)}% of the strip, not 100%`;
+  return null;
+}
+
+// Height on the strip (pixel y) where a window trend lands: linear inside each box between its edges
+// (stripEdges), clamped to the strip.
+export function trendToStripY(trend, boxes, edges) {
+  if (trend <= edges[0]) return boxes[0][1];
+  if (trend >= edges[5]) return boxes[4][0];
+  let i = 0;
+  while (i < 4 && trend >= edges[i + 1]) i++;
+  const [t, b] = boxes[i];
+  return b - ((trend - edges[i]) / (edges[i + 1] - edges[i])) * (b - t);
+}
+
 // 0 = Crash ... 4 = Moon.
 export function bucketOf(trendAbs, thresholds) {
   return thresholds.filter((t) => trendAbs >= t).length;

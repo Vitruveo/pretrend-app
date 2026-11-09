@@ -1,7 +1,7 @@
 'use client';
 
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import { BUCKET_NAMES, rulesFor } from '../_lib/gamemath';
+import { BUCKET_NAMES, rulesFor, validThresholds } from '../_lib/gamemath';
 import { getLive, getSettle, getWindow } from './api';
 import { useLiveWindow } from './use-live-window';
 import { MarketRound } from './market-round';
@@ -153,18 +153,26 @@ export function MarketGame({ market }) {
 
   const dismiss = () => setResult(null);
   const lastResult = recent.length ? recent[0] : null;
+  const roundThresholds = result?.thresholds || thresholds;
+  useEffect(() => {
+    if (win && !validThresholds(roundThresholds)) console.error('[markets] invalid bucket edges', market.slug, roundThresholds);
+  }, [win, roundThresholds, market.slug]);
 
   return (
     <div className="ptm">
       <MarketTicker market={market} win={win} thresholds={thresholds} calibration={live?.calibration} lastResult={lastResult} />
 
       <div className="card-dark p-3 p-md-4 ptm-play">
-        {win ? (
+        {win && !validThresholds(roundThresholds) ? (
+          <div style={{ minHeight: '420px' }} className="d-flex align-items-center justify-content-center text-danger" role="alert">
+            <span style={{ letterSpacing: '0.2em' }}>BUCKET EDGES INVALID: {JSON.stringify(roundThresholds)}</span>
+          </div>
+        ) : win ? (
           <MarketRound
             key={result ? `r${result.start}` : 'live'}
             market={market}
             win={win}
-            thresholds={result?.thresholds || thresholds}
+            thresholds={roundThresholds}
             call={result ? calls[result.start] ?? null : call}
             result={result}
             canCall={geo.allowed}
