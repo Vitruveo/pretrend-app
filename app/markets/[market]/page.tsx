@@ -32,8 +32,9 @@ export default async function MarketPage({ params }: { params: Promise<{ market:
       <main>
         <GeoProvider>
         {/* the fixed nav is about 70px tall; the band sits directly under it, full width */}
+        {/* the region band and money bar only apply to playable (game) markets */}
         <div className="bg-dark-custom" style={{ paddingTop: '72px' }}>
-          <GeoBand />
+          {m.game && <GeoBand />}
         </div>
         <section className="section-padding bg-dark-custom" style={{ paddingTop: '48px', paddingBottom: '60px' }}>
           <div className="container" style={{ maxWidth: m.game ? '1100px' : '960px' }}>
@@ -48,7 +49,7 @@ export default async function MarketPage({ params }: { params: Promise<{ market:
                 {m.headline}
               </p>
             </div>
-            <WalletTile />
+            {m.game && <WalletTile />}
             {m.game ? <MarketGame market={m} /> : <MarketView market={m} />}
           </div>
         </section>

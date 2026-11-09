@@ -6,11 +6,7 @@ import { bsc } from 'wagmi/chains';
 import { erc20Abi, formatUnits } from 'viem';
 import { vitruveo } from '../../web3/wagmi';
 import { useGeo } from './geo';
-
-// Bridged USDT on Vitruveo (USDT.b) and USDT on BNB Smart Chain.
-export const USDT_B_VITRUVEO = '0xB5D7314F2042A922A6EFe9a646a216cfD59dE6AE';
-export const USDT_BSC = '0x55d398326f99059fF775485246999027B3197955';
-export const BRIDGE_URL = 'https://scope.vitruveo.ai/bridge/usdt';
+import { USDT_BSC, VUSD_ADDRESS } from '../../config/vusd';
 
 const PURPLE = '#8b5cf6';
 const YELLOW = '#f0b90b';
@@ -20,8 +16,8 @@ function fmt(raw, decimals) {
   return Number(formatUnits(raw, Number(decimals))).toLocaleString('en-US', { maximumFractionDigits: 2 });
 }
 
-// Purple tile after the sub-head of every market page: the wallet's USDT.b on Vitruveo, large; its
-// USDT on BNB Chain as a smaller yellow button that switches the wallet there; and the bridge CTA.
+// Purple tile after the sub-head of every market page: the wallet's VUSD on Vitruveo, large; its USDT on
+// BNB Chain as a smaller yellow button that switches the wallet there; and the swap link (not region-gated).
 export function WalletTile() {
   const { address, isConnected } = useAccount();
   const { openConnectModal } = useConnectModal();
@@ -30,16 +26,16 @@ export function WalletTile() {
 
   const reads = useReadContracts({
     contracts: [
-      { address: USDT_B_VITRUVEO, abi: erc20Abi, functionName: 'balanceOf', args: [address], chainId: vitruveo.id },
-      { address: USDT_B_VITRUVEO, abi: erc20Abi, functionName: 'decimals', chainId: vitruveo.id },
       { address: USDT_BSC, abi: erc20Abi, functionName: 'balanceOf', args: [address], chainId: bsc.id },
       { address: USDT_BSC, abi: erc20Abi, functionName: 'decimals', chainId: bsc.id },
+      { address: VUSD_ADDRESS, abi: erc20Abi, functionName: 'balanceOf', args: [address], chainId: vitruveo.id },
+      { address: VUSD_ADDRESS, abi: erc20Abi, functionName: 'decimals', chainId: vitruveo.id },
     ],
     query: { enabled: !!address, refetchInterval: 20000 },
   });
   const d = reads.data;
-  const vtruUsdt = fmt(d?.[0]?.result, d?.[1]?.result);
-  const bscUsdt = fmt(d?.[2]?.result, d?.[3]?.result);
+  const bscUsdt = fmt(d?.[0]?.result, d?.[1]?.result);
+  const vusd = fmt(d?.[2]?.result, d?.[3]?.result);
   const actions = geo.allowed;
 
   return (
@@ -57,11 +53,11 @@ export function WalletTile() {
           <img src="/vitruveo.svg" alt="" aria-hidden="true" width={44} height={44} style={{ width: '44px', height: '44px' }} />
           <div>
             <div className="text-uppercase" style={{ color: '#c4b5fd', letterSpacing: '0.16em', fontSize: '0.75rem', fontWeight: 600 }}>
-              USDT.b on Vitruveo
+              VUSD on Vitruveo
             </div>
             <div className="fw-bold text-white" style={{ fontSize: 'clamp(2rem, 5vw, 3.2rem)', lineHeight: 1.05, fontVariantNumeric: 'tabular-nums' }}>
-              {!isConnected ? '—' : vtruUsdt === null ? '…' : vtruUsdt}
-              <span style={{ fontSize: '1rem', color: '#c4b5fd', marginLeft: '0.5rem', fontWeight: 600 }}>USDT.b</span>
+              {!isConnected ? '—' : vusd === null ? '…' : vusd}
+              <span style={{ fontSize: '1rem', color: '#c4b5fd', marginLeft: '0.5rem', fontWeight: 600 }}>VUSD</span>
             </div>
             {!isConnected && <div className="text-white-50 small mt-1">Connect a wallet to see your balance.</div>}
           </div>
@@ -84,15 +80,8 @@ export function WalletTile() {
               {bscUsdt === null ? '…' : bscUsdt} USDT on BNB Chain
             </button>
           )}
-          <a
-            href={BRIDGE_URL}
-            target="_blank"
-            rel="noopener noreferrer"
-            className={`btn btn-signal btn-sm px-4${actions ? '' : ' disabled'}`}
-            aria-disabled={!actions}
-            tabIndex={actions ? undefined : -1}
-          >
-            Bridge USDT from BSC
+          <a href="/swap/" className="btn btn-signal btn-sm px-4">
+            Swap VUSD
           </a>
         </div>
       </div>
