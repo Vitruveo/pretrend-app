@@ -50,9 +50,6 @@ export default function Header() {
         </button>
         <div className={`navbar-collapse justify-content-end ${menuOpen ? 'show' : 'collapse'}`} id="navbarNav">
           <ul className="navbar-nav gap-md-4 align-items-md-center">
-            <li className="nav-item" onClick={() => setMenuOpen(false)}>
-              <a className={`nav-link ${cleanPath === '' || cleanPath.startsWith('/markets') ? 'active' : ''}`} href="/">Trends</a>
-            </li>
             <li
               className={`nav-item dropdown ${aboutOpen ? 'show' : ''}`}
               onMouseEnter={() => setAboutOpen(true)}

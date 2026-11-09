@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import Header from './components/Header';
 import Footer from './components/Footer';
 import { MarketCards } from './markets/_components/market-cards';
+import LaunchCountdown from './components/LaunchCountdown';
 
 export const metadata: Metadata = {
   title: "Trends | Pretrend",
@@ -26,6 +27,7 @@ export default function TrendsPage() {
               <p className="fw-bold mt-5 mb-0" style={{ fontSize: 'clamp(3rem, 10vw, 7.5rem)', lineHeight: 1.05, letterSpacing: '-0.02em' }}>
                 <span className="text-gradient">And so it begins...</span>
               </p>
+              <LaunchCountdown />
             </div>
             <MarketCards />
             <p className="text-muted-custom small text-center mb-0">
