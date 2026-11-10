@@ -17,7 +17,8 @@ const FONT = "'Titillium Web', sans-serif";
 const SIGNAL = '#2f8fd6';
 const EMBER = '#f0954f';
 
-const CONFETTI_COLORS = ['#2f8fd6', '#7abe4d', '#f0954f', '#eef3fb', '#8fa0ba'];
+const CONFETTI_COLORS = ['#2f8fd6', '#7abe4d', '#f0954f', '#eef3fb', '#e8c547', '#8b5cf6', '#4ade80', '#ef4444'];
+const CONFETTI_PIECES = 320; // three waves over the whole screen
 
 // Deterministic pseudo-random in [0, 1) so confetti can be derived in render.
 function rnd(i, salt) {
@@ -38,15 +39,15 @@ export function MarketRound({ market, win, thresholds, call, result, canCall, on
   const confetti = useMemo(
     () =>
       result && !result.void && (celebrate ?? (call !== null && call === result.bucket))
-        ? Array.from({ length: 90 }, (_, i) => ({
+        ? Array.from({ length: CONFETTI_PIECES }, (_, i) => ({
             id: i,
             left: rnd(i, 1) * 100,
-            delay: rnd(i, 2) * 0.4,
-            duration: 1.6 + rnd(i, 3) * 1.2,
-            size: 5 + rnd(i, 4) * 6,
+            delay: (i % 3) * 1.1 + rnd(i, 2) * 0.9,
+            duration: 2.8 + rnd(i, 3) * 2.4,
+            size: 7 + rnd(i, 4) * 9,
             color: CONFETTI_COLORS[Math.floor(rnd(i, 5) * CONFETTI_COLORS.length)],
             spin: 360 + rnd(i, 6) * 540,
-            drift: -40 + rnd(i, 7) * 80,
+            drift: -140 + rnd(i, 7) * 280,
           }))
         : null,
     [result, call, celebrate]
@@ -156,7 +157,8 @@ export function MarketRound({ market, win, thresholds, call, result, canCall, on
   const lastPt = shownPoints.length ? shownPoints[shownPoints.length - 1] : null;
   const liveLineColor = liveBucket >= 0 ? bucketRgba(liveBucket, 0.95) : '#8fa0ba';
   const decimals = market.unit === 'usd' ? 0 : 1;
-  const hit = settled && !result.void && called && call === result.bucket;
+  // with an on-chain position (celebrate), a hit is holding units in the winning bucket
+  const hit = settled && !result.void && (celebrate ?? (called && call === result.bucket));
 
   let phaseText;
   if (settled) phaseText = result.void ? 'Window void: oracle gap, no answer' : `Settled ${fmtUtc(result.start)} market`;
@@ -169,7 +171,8 @@ export function MarketRound({ market, win, thresholds, call, result, canCall, on
       <style>{`
         @keyframes ptm-confetti-fall {
           0% { transform: translate(0, -20px) rotate(0deg); opacity: 1; }
-          100% { transform: translate(var(--drift), 340px) rotate(var(--spin)); opacity: 0; }
+          85% { opacity: 1; }
+          100% { transform: translate(var(--drift), 105vh) rotate(var(--spin)); opacity: 0; }
         }
         @keyframes ptm-live-pulse {
           0% { r: 3; opacity: 1; }
@@ -418,13 +421,13 @@ export function MarketRound({ market, win, thresholds, call, result, canCall, on
       )}
 
       {confetti && (
-        <div aria-hidden="true" style={{ position: 'absolute', inset: 0, pointerEvents: 'none', overflow: 'hidden' }}>
+        <div aria-hidden="true" style={{ position: 'fixed', inset: 0, pointerEvents: 'none', overflow: 'hidden', zIndex: 2000 }}>
           {confetti.map((c) => (
             <span
               key={c.id}
               style={{
                 position: 'absolute',
-                top: 0,
+                top: -24,
                 left: `${c.left}%`,
                 width: `${c.size}px`,
                 height: `${c.size * 0.45}px`,

@@ -10,37 +10,29 @@ import { MarketRulebook } from './market-rulebook';
 import { fmtAbs, fmtUtc } from './market-format';
 import { useGeo } from './geo';
 import { BuyPanel } from './buy-panel';
-import { useAccount, useReadContract } from 'wagmi';
-import { zeroAddress } from 'viem';
+import { useAccount, useReadContract, useReadContracts } from 'wagmi';
+import { formatUnits, zeroAddress } from 'viem';
 import { MARKET_TYPE_IDS, PRETREND_MARKETS_ABI, PRETREND_MARKETS_ADDRESS } from '../../config/pretrend-markets';
 import { VITRUVEO_CHAIN_ID } from '../../config/vusd';
 
 const RECENT = 8;
 
-// Calls this browser made, per market, keyed by window start. No stakes yet: the browser is the only
-// record, and the chain will be the record when staking lands.
-const callsKey = (slug) => `ptm:calls:${slug}`;
-function loadCalls(slug) {
-  try {
-    const raw = window.localStorage.getItem(callsKey(slug));
-    return raw ? JSON.parse(raw) : {};
-  } catch (e) {
-    return {};
-  }
-}
-function saveCalls(slug, calls) {
-  try {
-    const keys = Object.keys(calls).map(Number).sort((a, b) => a - b).slice(-50);
-    const out = {};
-    for (const k of keys) out[k] = calls[k];
-    window.localStorage.setItem(callsKey(slug), JSON.stringify(out));
-  } catch (e) {
-    // private mode
-  }
-}
 
-function RecentMarkets({ market, rows, calls }) {
+const vusd = (wei) => Number(formatUnits(wei, 18)).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+
+// The connected wallet's on-chain position in each recent market: buckets held, and what it won or got back.
+function RecentMarkets({ market, rows }) {
   const decimals = market.unit === 'usd' ? 0 : 1;
+  const { address } = useAccount();
+  const typeId = MARKET_TYPE_IDS[market.slug];
+  const posQ = useReadContracts({
+    contracts: rows.map((r) => ({
+      address: PRETREND_MARKETS_ADDRESS, abi: PRETREND_MARKETS_ABI, chainId: VITRUVEO_CHAIN_ID,
+      functionName: 'positionOf', args: [BigInt(typeId || 0), BigInt(r.start), address || zeroAddress],
+    })),
+    query: { enabled: !!address && !!typeId && rows.length > 0, refetchInterval: 15000 },
+  });
+  const posOf = (i) => posQ.data?.[i]?.result;
   return (
     <div className="card-dark p-3 p-md-4 mt-5 ptm">
       <h2 className="h4 fw-bold mb-3">Recent markets</h2>
@@ -55,13 +47,16 @@ function RecentMarkets({ market, rows, calls }) {
                 <th>Points</th>
                 <th style={{ textAlign: 'right' }}>OLS answer</th>
                 <th>Bucket</th>
-                <th>Your call</th>
+                <th>Your position</th>
               </tr>
             </thead>
             <tbody>
-              {rows.map((r) => {
-                const c = calls[r.start];
-                const called = c !== undefined && c !== null;
+              {rows.map((r, i) => {
+                const p = posOf(i);
+                const held = p ? [4, 3, 2, 1, 0].filter((b) => p.units[b] > 0n) : [];
+                const names = held.map((b) => BUCKET_NAMES[b]).join(', ');
+                const bought = p ? p.amount.reduce((a, x) => a + x, 0n) : 0n;
+                const wonIt = !r.void && held.includes(r.bucket);
                 return (
                   <tr key={r.start}>
                     <td className="ptm-mono">{fmtUtc(r.start)}</td>
@@ -69,10 +64,10 @@ function RecentMarkets({ market, rows, calls }) {
                     <td className="ptm-mono" style={{ textAlign: 'right' }}>{r.void ? 'void' : fmtAbs(r.fit.trendAbs, market, decimals)}</td>
                     <td>{r.void ? '—' : BUCKET_NAMES[r.bucket]}</td>
                     <td>
-                      {!called ? <span className="ptm-faint">—</span>
-                        : r.void ? <span className="ptm-faint">{BUCKET_NAMES[c]} · void</span>
-                        : c === r.bucket ? <span className="ptm-signal">{BUCKET_NAMES[c]} · hit</span>
-                        : <span className="ptm-faint">{BUCKET_NAMES[c]} · miss</span>}
+                      {!held.length ? <span className="ptm-faint">—</span>
+                        : r.void ? <span className="ptm-faint">{names} · void, {vusd(bought)} VUSD refunded</span>
+                        : wonIt ? <span style={{ color: '#4ade80' }}>{names} · won {vusd(p.potential[r.bucket])} VUSD</span>
+                        : <span className="ptm-faint">{names} · lost</span>}
                     </td>
                   </tr>
                 );
@@ -90,7 +85,7 @@ export function MarketGame({ market }) {
   const [live, setLive] = useState(null);
   const [liveError, setLiveError] = useState(null);
   const [windowInfo, setWindowInfo] = useState(null); // frozen thresholds for the current window
-  const [calls, setCalls] = useState({});
+  const [picks, setPicks] = useState({}); // bucket selected on this page, per window start (not stored)
   const [result, setResult] = useState(null); // the settled window shown in place of the live one
   const [resultFor, setResultFor] = useState(null); // window start whose result is shown or awaited
   const [recent, setRecent] = useState([]);
@@ -99,10 +94,9 @@ export function MarketGame({ market }) {
   const { address } = useAccount();
   const win = useLiveWindow(market, live);
   const thresholds = (windowInfo && windowInfo.start === win?.start ? windowInfo.thresholds : null) || live?.thresholds || market.fallbackThresholds;
-  const call = win ? calls[win.start] ?? null : null;
+  const call = win ? picks[win.start] ?? null : null;
 
   useEffect(() => {
-    setCalls(loadCalls(market.slug));
     getLive(market.slug).then(setLive).catch((e) => setLiveError(e.message));
     const id = setInterval(() => getLive(market.slug).then(setLive).catch(() => {}), 4 * 60 * 1000);
     return () => clearInterval(id);
@@ -128,18 +122,24 @@ export function MarketGame({ market }) {
 
   const onCall = useCallback((bucket) => {
     if (!win) return;
-    setCalls((prev) => {
-      const next = { ...prev, [win.start]: bucket };
-      saveCalls(market.slug, next);
-      return next;
-    });
-  }, [win, market.slug]);
+    setPicks((prev) => ({ ...prev, [win.start]: bucket }));
+  }, [win]);
 
-  // When a window this browser called ends, poll the server until it is settled, then show it.
+  // The connected wallet's on-chain position in the window that just ended: if it bought in, the result is shown.
+  const typeId = MARKET_TYPE_IDS[market.slug];
+  const prevStart = win ? win.start - rules.gameS : 0;
+  const prevPosQ = useReadContract({
+    address: PRETREND_MARKETS_ADDRESS, abi: PRETREND_MARKETS_ABI, chainId: VITRUVEO_CHAIN_ID,
+    functionName: 'positionOf', args: [BigInt(typeId || 0), BigInt(prevStart), address || zeroAddress],
+    query: { enabled: !!typeId && !!address && !!prevStart, refetchInterval: 10000 },
+  });
+  const boughtPrev = !!prevPosQ.data && prevPosQ.data.units.some((u) => u > 0n);
+
+  // When a window this wallet bought into ends, poll the server until it is settled, then show it.
   useEffect(() => {
     if (!win || result) return undefined;
     const prev = win.start - rules.gameS;
-    if (calls[prev] === undefined || resultFor === prev) return undefined;
+    if (!boughtPrev || resultFor === prev) return undefined;
     if (win.now > prev + rules.gameS + 120) return undefined; // too old to replay
     let stop = false;
     const poll = async () => {
@@ -155,10 +155,9 @@ export function MarketGame({ market }) {
     poll();
     const id = setInterval(poll, 3000);
     return () => { stop = true; clearInterval(id); };
-  }, [win?.start, win?.phase, calls, result, resultFor, market.slug, rules]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [win?.start, win?.phase, boughtPrev, result, resultFor, market.slug, rules]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // Confetti when the connected wallet holds units in the winning bucket of the market just settled.
-  const typeId = MARKET_TYPE_IDS[market.slug];
   const posQ = useReadContract({
     address: PRETREND_MARKETS_ADDRESS,
     abi: PRETREND_MARKETS_ABI,
@@ -168,6 +167,15 @@ export function MarketGame({ market }) {
     query: { enabled: !!typeId && !!result && !!address },
   });
   const won = !!result && !result.void && !!posQ.data && posQ.data.units[result.bucket] > 0n;
+  // the bucket shown as the wallet's on the settled round: the winning one if held, else its largest buy
+  const heldBucket = (() => {
+    if (!result || !posQ.data) return null;
+    const u = posQ.data.units;
+    if (!result.void && u[result.bucket] > 0n) return result.bucket;
+    let best = null;
+    for (let b = 0; b < 5; b++) if (u[b] > 0n && (best === null || posQ.data.amount[b] > posQ.data.amount[best])) best = b;
+    return best;
+  })();
 
   const dismiss = () => setResult(null);
   const lastResult = recent.length ? recent[0] : null;
@@ -191,7 +199,7 @@ export function MarketGame({ market }) {
             market={market}
             win={win}
             thresholds={roundThresholds}
-            call={result ? calls[result.start] ?? null : call}
+            call={result ? heldBucket : call}
             result={result}
             canCall={geo.allowed}
             onCall={onCall}
@@ -212,7 +220,7 @@ export function MarketGame({ market }) {
         </div>
       </div>
 
-      <RecentMarkets market={market} rows={recent} calls={calls} />
+      <RecentMarkets market={market} rows={recent} />
       <MarketRulebook market={market} />
     </div>
   );
