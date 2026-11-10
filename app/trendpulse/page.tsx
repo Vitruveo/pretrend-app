@@ -20,8 +20,9 @@ export default function TrendPulsePage() {
                 <span className="text-gradient">TrendPulse</span> — Oracle Status
               </h1>
               <p className="lead text-muted-custom" style={{ maxWidth: '820px', margin: '0 auto', textWrap: 'balance' }}>
-                The oracle that resolves Pretrend markets, watched live. Every feed runs at
-                its own cadence — each card explains what you&apos;re seeing and how often it moves.
+                The oracle that resolves Pretrend markets and the Notary that settles them on
+                Vitruveo, watched live. Every feed runs at its own cadence — each card explains
+                what you&apos;re seeing and how often it moves.
               </p>
             </div>
             <TrendPulseStatus />

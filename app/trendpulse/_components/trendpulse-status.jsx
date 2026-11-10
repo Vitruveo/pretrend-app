@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { TRENDPULSE_BASE, TRENDPULSE_SOURCES } from '../../config/trendpulse';
 import { LiveChart } from '../../components/live-chart';
+import { NotaryStatus } from './notary-status';
 
 const REFRESH_MS = 10_000; // chart/health update cadence
 
@@ -88,6 +89,7 @@ export function TrendPulseStatus() {
         <span className="text-white">{statusText}</span>
 
       </div>
+      <NotaryStatus />
       {TRENDPULSE_SOURCES.map((s) => (
         <div key={s.key} className="card-dark p-3 p-md-4 mb-4">
           <div className="tps-row">
