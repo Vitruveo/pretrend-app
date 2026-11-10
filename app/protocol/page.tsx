@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import Link from 'next/link';
 import Header from '../components/Header';
 import Footer from '../components/Footer';
 import DomainCarousel from '../components/DomainCarousel';
@@ -8,7 +9,7 @@ import { AnimatedBuckets, CountUp } from '../visuals';
 
 export const metadata: Metadata = {
   title: "Protocol | Pretrend",
-  description: "Pretrend is a trend-based oracle protocol enabling prediction markets to resolve based on directional movement rather than binary outcomes. Native on-chain statistical computation on the Vitruveo blockchain.",
+  description: "Pretrend is a trend prediction marketplace: markets resolve on the magnitude and direction of a live feed's OLS trend, priced on the Timeslope and settled in VUSD on the Vitruveo blockchain.",
 };
 
 const TrendLineSVG = () => (
@@ -140,34 +141,6 @@ const InProgressBadge = () => (
   </div>
 );
 
-const ReachSVG = () => (
-  <svg viewBox="0 0 800 360" style={{ width: '100%', height: 'auto' }}>
-    <defs>
-      <linearGradient id="reachGrad" x1="0%" y1="0%" x2="100%" y2="0%">
-        <stop offset="0%" stopColor="#7abe4d" stopOpacity="0.25" />
-        <stop offset="100%" stopColor="#a3d97a" stopOpacity="0.25" />
-      </linearGradient>
-    </defs>
-    {[[150, 70], [650, 70], [150, 290], [650, 290]].map(([x, y], i) => (
-      <line key={i} x1="400" y1="180" x2={x} y2={y} stroke="#7abe4d" strokeWidth="1.5" strokeOpacity="0.4" />
-    ))}
-    {[
-      { x: 60, y: 40, t: 'Primary Marketplace' },
-      { x: 560, y: 40, t: 'White-Label Partners' },
-      { x: 60, y: 260, t: 'Open-Source Builders' },
-      { x: 560, y: 260, t: 'BSC & EVM Chains' },
-    ].map((n, i) => (
-      <g key={i}>
-        <rect x={n.x} y={n.y} width="180" height="60" rx="10" fill="#15211a" stroke="#7abe4d" strokeWidth="1" />
-        <text x={n.x + 90} y={n.y + 35} textAnchor="middle" fill="rgba(255,255,255,0.85)" fontSize="13" fontWeight="600">{n.t}</text>
-      </g>
-    ))}
-    <rect x="300" y="140" width="200" height="80" rx="14" fill="#1b2a20" stroke="#a3d97a" strokeWidth="1.5" />
-    <text x="400" y="172" textAnchor="middle" fill="#a3d97a" fontSize="15" fontWeight="700">PRETREND ORACLE</text>
-    <text x="400" y="194" textAnchor="middle" fill="rgba(255,255,255,0.6)" fontSize="12">on Vitruveo</text>
-  </svg>
-);
-
 const VirtuousCircleSVG = () => (
   <svg viewBox="0 0 800 500" style={{ width: '100%', height: 'auto', display: 'block' }}>
     <defs>
@@ -223,7 +196,7 @@ export default function ProtocolPage() {
                 Continuous trend resolution for prediction markets. Users predict the
                 magnitude and direction of change — not just whether an event occurs.
               </p>
-              <p className="text-white-50 mt-3">Version 2.0</p>
+              <p className="text-white-50 mt-3">Version 4.0</p>
               <div className="mt-5 mx-auto" style={{ maxWidth: '820px' }}>
                 <video
                   src="/videos/pretrend-intro.mp4"
@@ -243,9 +216,9 @@ export default function ProtocolPage() {
                 <a href="/whitepaper" className="btn btn-outline-light btn-lg px-5">
                   Read the Whitepaper
                 </a>
-                <a href="https://www.epicaiwars.com/trends" className="btn btn-signal btn-lg px-5">
-                  AIWars Trends
-                </a>
+                <Link href="/" className="btn btn-signal btn-lg px-5">
+                  Open the Markets
+                </Link>
               </div>
             </div>
           </div>
@@ -261,10 +234,11 @@ export default function ProtocolPage() {
                     <h2 className="h4 text-green mb-3">What it does</h2>
                     <p className="text-muted-custom mb-0">
                       A Pretrend market asks how much something will move, not whether it will.
-                      Prices from a live feed are sampled over a fixed window, a trend line is fit
-                      across the whole window, and the slope lands in one of five graded outcome
-                      buckets. The computation runs inside the chain through the Trend precompile,
-                      so settlement is deterministic and verifiable by anyone.
+                      A live feed is recorded over a fixed window, a trend line is fit across the
+                      whole window, and the fitted change lands in one of five graded outcome
+                      buckets. Participants buy units in VUSD; winners get their stake back plus a
+                      share of the losing buckets. The same computation runs natively on Vitruveo
+                      through the Trend precompile, so every result is deterministic and verifiable by anyone.
                     </p>
                   </div>
                   <div className="col-md-6">
@@ -275,8 +249,8 @@ export default function ProtocolPage() {
                         Vertical Foundation
                       </a>{' '}
                       as part of the Vitruveo ecosystem. The statistical engine ships inside the
-                      Vitruveo protocol itself; TrendPulse, the oracle, publishes the feeds; and
-                      AIWars Trends is the first game built on top of them.
+                      Vitruveo protocol itself; TrendPulse, the oracle, records the feeds; and
+                      Pretrend runs the marketplace on top of them, from data to payout.
                     </p>
                   </div>
                 </div>
@@ -301,14 +275,14 @@ export default function ProtocolPage() {
                 Pretrend&apos;s statistical engine ships inside the Vitruveo protocol itself —
                 compiled Go running at the client layer, not contract bytecode. That depth of
                 integration is deliberate: Vertical Foundation is all-in on making Pretrend
-                the defining application of the ecosystem, with VTRU as its primary currency.
+                the defining application of the ecosystem.
               </p>
               <p className="text-muted-custom mb-0">
-                Polymarket proved the appetite. Pretrend isn&apos;t competing for that
-                audience — it&apos;s building the layer beneath: an oracle, an unbiased and
-                verifiable source of truth that any marketplace can resolve against. With the
-                Pretrend contracts and the Trend Market Starter Kit, launching a trend market
-                for your own community becomes a weekend project, not a venture.
+                Polymarket proved the appetite for prediction markets. Pretrend brings a new
+                kind of market to it, and runs that market itself: one operator and one set of
+                rules from the oracle that records the data to the contract that pays the
+                winners, settled in VUSD, the market currency. The marketplace is not offered
+                where prediction markets are prohibited by regulation.
               </p>
             </div>
           </div>
@@ -367,14 +341,13 @@ export default function ProtocolPage() {
                 word for an outcome — they can verify it.
               </p>
               <p className="text-muted-custom mb-4">
-                Artificial intelligence is the scale axis. The AI Notary watches data
-                sources around the clock, explains why probabilities are shifting, and
-                helps anyone design a well-calibrated market — work that once took a
-                trading desk.
+                Artificial intelligence is the scale axis. AI market insights watch every
+                feed around the clock and explain, in plain language, why a trend is moving
+                and where buys are flowing — work that once took a trading desk.
               </p>
               <p className="text-muted-custom mb-4">
                 The humanities are the meaning axis. Markets are only interesting when
-                they&apos;re about what people care about — music, movies, elections,
+                they&apos;re about what people care about — markets, music, movies,
                 culture, attention. Pretrend turns collective human judgment about those
                 things into a measurable, tradable signal.
               </p>
@@ -394,7 +367,7 @@ export default function ProtocolPage() {
             <div className="text-center mb-5">
               <h2 className="display-6 fw-bold mb-3">2026 Roadmap</h2>
               <p className="text-muted-custom" style={{ maxWidth: '700px', margin: '0 auto' }}>
-                The path to a live Pretrend oracle — quarter by quarter through 2026.
+                The path to live Pretrend markets — quarter by quarter through 2026.
               </p>
             </div>
 
@@ -429,8 +402,8 @@ export default function ProtocolPage() {
                 },
                 {
                   q: 'Q4 2026',
-                  title: 'Oracle & Launch',
-                  desc: 'Complete development of Pretrend and launch the oracle alongside the reference site.',
+                  title: 'Oracle & Marketplace',
+                  desc: 'Launch the TrendPulse oracle and the Pretrend marketplace, with VUSD as the market currency.',
                   href: null,
                   cta: null,
                   done: true,
@@ -546,15 +519,15 @@ export default function ProtocolPage() {
                   magnitude provides richer market dynamics and fairer outcomes.
                 </p>
                 <p className="text-muted-custom mb-3">
-                  Pretrend computes the trend slope over a defined time period using linear
-                  regression. The result is a percentage change that maps to one of five outcome
-                  buckets, each representing a range of possible movements calibrated to the
-                  specific data source.
+                  Pretrend fits a linear regression trend over every point in a market&apos;s window.
+                  The fitted change maps to one of five outcome buckets, each covering a range of
+                  movement calibrated to the specific data source.
                 </p>
                 <p className="text-muted-custom">
-                  Users purchase units in one of five buckets — from significant decline to significant
-                  growth. Every bucket's price climbs from a dime at open to a dollar at the close,
-                  so earlier buyers receive more units per dollar and better returns for early conviction.
+                  Participants buy units in one of five buckets — from significant decline to significant
+                  growth. Every bucket&apos;s price climbs from a dime at open to a dollar at the close,
+                  so earlier buyers receive more units per dollar. Winners get their stake back plus a
+                  share of the losing buckets in proportion to their units.
                 </p>
               </div>
             </div>
@@ -586,9 +559,8 @@ export default function ProtocolPage() {
                       { feature: 'Native on-chain statistical computation', poly: false, kalshi: false },
                       { feature: 'Timeslope pricing rewards early conviction', poly: false, kalshi: false },
                       { feature: 'Any time-series data source', poly: false, kalshi: false },
-                      { feature: 'Cross-chain resolution', poly: false, kalshi: false },
-                      { feature: 'Permissionless on-chain settlement', poly: true, kalshi: false },
-                      { feature: 'White-label, embeddable markets', poly: false, kalshi: false },
+                      { feature: 'Live trend you can watch as the market runs', poly: false, kalshi: false },
+                      { feature: 'On-chain settlement', poly: true, kalshi: false },
                     ].map((row) => (
                       <tr key={row.feature} style={{ borderTop: '1px solid rgba(255,255,255,0.06)' }}>
                         <td className="text-muted-custom">{row.feature}</td>
@@ -748,7 +720,7 @@ export default function ProtocolPage() {
             </p>
             <div className="row g-4">
               {[
-                { cat: 'Crypto', q: "Where does Bitcoin's 30-day trend land?", hi: 3 },
+                { cat: 'Crypto', q: 'Is memecoin demand on pump.fun rising over the next five minutes?', hi: 3 },
                 { cat: 'Equities', q: "How strong is NVIDIA's momentum this quarter?", hi: 4 },
                 { cat: 'AI', q: 'Is demand for AI compute still accelerating?', hi: 4 },
                 { cat: 'Social', q: "A creator's follower growth over 90 days", hi: 2 },
@@ -779,41 +751,41 @@ export default function ProtocolPage() {
           <div className="container">
             <h2 className="display-6 fw-bold text-center mb-3">System Architecture</h2>
             <p className="text-muted-custom text-center mb-5" style={{ maxWidth: '700px', margin: '0 auto' }}>
-              Three primary components working together: the Vitruveo Oracle, the Notary Service,
-              and the Marketplace Layer.
+              Six components, all operated by Pretrend: from the feed that records the data to the
+              contract that pays the winners.
             </p>
 
             <div className="row g-4 mb-5">
               {[
                 {
-                  title: 'Oracle Contract',
-                  location: 'Vitruveo Blockchain',
-                  desc: 'Stores market state, bucket thresholds, trend results, and fee accounting. Does not compute trends directly — stores results submitted by the authorized Notary.',
+                  title: 'TrendPulse Oracle',
+                  location: 'Off-chain (Pretrend operated)',
+                  desc: 'Records every feed at its native cadence, down to every two seconds, and serves the series and live trend statistics through a public API.',
                 },
                 {
                   title: 'Trend Precompile',
                   location: 'Vitruveo Blockchain (native)',
-                  desc: 'Computes OLS regression, R-squared, volatility, and bucket quintiles at compiled machine-code speed. What would be impossible in Solidity executes in microseconds.',
+                  desc: 'Computes OLS regression, R-squared, volatility, and bucket quintiles at compiled machine-code speed, so anyone can recompute a published result.',
                 },
                 {
                   title: 'Notary Service',
-                  location: 'Off-chain',
-                  desc: 'Fetches external data, signs results, submits to Oracle. Batches updates for markets sharing the same data source. Sole authorized writer to the Oracle contract.',
+                  location: 'Off-chain (Pretrend operated)',
+                  desc: 'Freezes each market’s bucket edges at the open, fits the final trend at the close, and signs and records the result. Also signs USDT bridge receipts.',
                 },
                 {
-                  title: 'Marketplace Contract',
-                  location: 'BSC (or other EVM chains)',
-                  desc: 'Handles unit purchases, pot tracking, and winner payouts. Deployed on external chains for accessibility and liquidity.',
+                  title: 'Market Contracts',
+                  location: 'Vitruveo Blockchain',
+                  desc: 'Handle unit purchases in VUSD, bucket state, fees, carryover, and winner payouts. Settlement happens on Vitruveo, with no cross-chain step.',
                 },
                 {
-                  title: 'HOST Bridge',
-                  location: 'Vitruveo to external chains',
-                  desc: 'Pushes resolution data cross-chain via HTTP Outbound Service Trigger. Validator-signed payloads ensure cryptographic proof of resolution.',
+                  title: 'VUSD & Bridge',
+                  location: 'Vitruveo and BNB Chain',
+                  desc: 'VUSD, the market currency, is backed 1:1 by USDT.b. USDT moves between BNB Chain and Vitruveo through the notarized bridge, in-page on the swap page.',
                 },
                 {
                   title: 'Provider Modules',
                   location: 'Off-chain',
-                  desc: 'Per-source adapters that fetch, authenticate, and normalize external time-series data before it reaches the Notary for signing.',
+                  desc: 'Per-source adapters that read an external source and normalize it into timestamped points for the oracle.',
                 },
               ].map((component) => (
                 <div key={component.title} className="col-lg-4 col-md-6">
@@ -886,7 +858,7 @@ export default function ProtocolPage() {
           <div className="container">
             <h2 className="display-6 fw-bold text-center mb-3">Timeslope Pricing</h2>
             <p className="text-muted-custom text-center mb-5" style={{ maxWidth: '700px', margin: '0 auto' }}>
-              A dime at the open, a dollar at the close. Every bucket's price climbs with the
+              A dime at the open, a dollar at the close. Every bucket&apos;s price climbs with the
               clock and accelerates with demand — rewarding early conviction with better returns.
             </p>
 
@@ -917,14 +889,14 @@ export default function ProtocolPage() {
                         </tr>
                       </thead>
                       <tbody className="text-white-50">
-                        <tr><td>Alice (early)</td><td>$0.21</td><td>466</td><td>53.1%</td><td className="text-green">4.78x</td></tr>
-                        <tr><td>Carol (mid)</td><td>$0.44</td><td>226</td><td>25.8%</td><td>2.32x</td></tr>
-                        <tr><td>Frank (late)</td><td>$0.91</td><td>110</td><td>12.6%</td><td>1.13x</td></tr>
+                        <tr><td>Alice (early)</td><td>$0.21</td><td>466</td><td>53.1%</td><td className="text-green">3.85x</td></tr>
+                        <tr><td>Carol (mid)</td><td>$0.44</td><td>226</td><td>25.8%</td><td>2.37x</td></tr>
+                        <tr><td>Frank (late)</td><td>$0.91</td><td>110</td><td>12.6%</td><td>1.66x</td></tr>
                       </tbody>
                     </table>
                   </div>
                   <p className="text-muted-custom small mb-0">
-                    Same $100 stake, different timing. Betting closes at 80% of the market, when every bucket reaches $1.00 and the trend line is revealed.
+                    Same $100 stake plus the $2 fee, different timing. Winners get their stake back plus their unit share of the losing buckets. Buying closes at 80% of the market, when every bucket reaches $1.00.
                   </p>
                 </div>
               </div>
@@ -937,25 +909,25 @@ export default function ProtocolPage() {
           <div className="container">
             <h2 className="display-6 fw-bold text-center mb-3">Market Lifecycle</h2>
             <p className="text-muted-custom text-center mb-5" style={{ maxWidth: '700px', margin: '0 auto' }}>
-              From creation to resolution — a complete flow across chains.
+              From open to payout, back to back — a new market every few minutes.
             </p>
 
             <div className="row g-4 mb-5">
               {[
                 {
                   step: '01',
-                  title: 'Create',
-                  desc: 'Creator specifies data source, start time, and duration. Notary fetches historical data, computes bucket thresholds via the precompile, and initializes the market.',
+                  title: 'Open',
+                  desc: 'A new market opens on every multiple of its window, such as every five minutes for pump.fun. The Notary freezes the bucket edges from the feed’s recent history.',
                 },
                 {
                   step: '02',
-                  title: 'Trade',
-                  desc: 'Users purchase units in their chosen bucket. Timeslope pricing fills each purchase, climbing with time and demand until the 80% close. The Notary updates the trend at the source cadence.',
+                  title: 'Buy',
+                  desc: 'Participants buy units in VUSD while watching the feed and its live trend. Timeslope pricing climbs with time and demand until buying closes at 80% of the market.',
                 },
                 {
                   step: '03',
                   title: 'Resolve',
-                  desc: 'When duration expires, the final trend determines the winning bucket. The Oracle pushes resolution via HOST to marketplace contracts, triggering payouts.',
+                  desc: 'At the close, the Notary fits the final trend over every recorded point and records the winning bucket on Vitruveo. Winners get their stake back plus their share of the losing buckets.',
                 },
               ].map((phase) => (
                 <div key={phase.step} className="col-lg-4">
@@ -975,26 +947,24 @@ export default function ProtocolPage() {
           <div className="container">
             <h2 className="display-6 fw-bold text-center mb-3">Data Sources</h2>
             <p className="text-muted-custom text-center mb-5" style={{ maxWidth: '700px', margin: '0 auto' }}>
-              Pretrend supports any time-series data. Each source has a provider module that handles
-              fetching, authentication, and normalization.
+              Each market resolves on a single canonical feed recorded by TrendPulse. Launch markets
+              are listed first; more feeds are added over time.
             </p>
 
             <div className="row g-4 mb-5">
               {[
-                { category: 'Cryptocurrency', examples: 'BTC price, ETH price, trading volume, TVL', resolution: '15 minutes', window: '30 days' },
-                { category: 'Equities', examples: 'Stock prices, indices, forex rates', resolution: '15-60 minutes', window: '90 days' },
-                { category: 'Social Metrics', examples: 'Follower counts, view counts, engagement rates', resolution: '1-4 hours', window: '90 days' },
-                { category: 'Economic', examples: 'Inflation, unemployment, interest rates', resolution: '24 hours to weekly', window: '1 year' },
-                { category: 'Elections', examples: 'Polling aggregates, approval ratings', resolution: '24 hours', window: '90 days' },
-                { category: 'Commodities', examples: 'Oil, gold, natural gas, agricultural futures', resolution: '15-60 minutes', window: '90 days' },
+                { category: 'pump.fun Buy Volume', examples: 'SOL spent buying pump.fun coins on their bonding curve', meta: 'Every 2 seconds · 5-minute markets · Live' },
+                { category: 'Bitcoin', examples: 'BTC against USDT, from a continuous exchange stream', meta: 'Every 5 seconds · 15-minute markets · Read-only' },
+                { category: 'Ethereum', examples: 'ETH against USDT, from a continuous exchange stream', meta: 'Every 5 seconds · 30-minute markets · Read-only' },
+                { category: 'Equities', examples: 'Stock prices, indices, forex rates', meta: 'Planned' },
+                { category: 'Commodities', examples: 'Oil, gold, natural gas, agricultural futures', meta: 'Planned' },
+                { category: 'Social Metrics', examples: 'Follower counts, view counts, engagement rates', meta: 'Planned' },
               ].map((source) => (
                 <div key={source.category} className="col-lg-4 col-md-6">
                   <div className="card-dark p-4 h-100">
                     <h4 className="h5 text-green mb-2">{source.category}</h4>
                     <p className="text-muted-custom small mb-2">{source.examples}</p>
-                    <div className="small text-white-50">
-                      Resolution: {source.resolution} &middot; Window: {source.window}
-                    </div>
+                    <div className="small text-white-50">{source.meta}</div>
                   </div>
                 </div>
               ))}
@@ -1002,47 +972,51 @@ export default function ProtocolPage() {
           </div>
         </section>
 
-        {/* Marketplace Variants */}
-        <section className="section-padding bg-dark-alt">
+        {/* The Marketplace */}
+        <section className="section-padding bg-dark-custom">
           <div className="container">
-            <h2 className="display-6 fw-bold text-center mb-3">Marketplace Models</h2>
-            <p className="text-muted-custom text-center mb-5" style={{ maxWidth: '600px', margin: '0 auto' }}>
-              Multiple deployment models for different use cases.
-            </p>
-
-            <div className="card-dark p-4 mb-4">
-              <ReachSVG />
-            </div>
+            <h2 className="display-6 fw-bold text-center mb-3">The Marketplace</h2>
             <p className="text-muted-custom text-center mb-5" style={{ maxWidth: '700px', margin: '0 auto' }}>
-              One oracle on Vitruveo resolves markets wherever they live — and the more places
-              Pretrend runs, the stronger the whole network becomes.
+              Pretrend operates the marketplace itself: one set of rules from the data to the payout.
             </p>
 
             <div className="row g-4">
-              <div className="col-lg-4">
+              <div className="col-lg-6">
                 <div className="card-dark p-4 h-100">
-                  <h3 className="h5 text-green mb-3">Primary Marketplace</h3>
+                  <h3 className="h5 text-green mb-3">VUSD</h3>
                   <p className="text-muted-custom mb-0">
-                    Operated by Pretrend with access to all data sources. Full transaction
-                    fee retention. General-purpose interface for retail users.
+                    The market currency on Pretrend, backed 1:1 by USDT.b on Vitruveo. Swap it 1:1
+                    with USDT on BNB Chain or USDT.b on Vitruveo, in-page on the{' '}
+                    <a href="/swap/" className="text-green text-decoration-none">swap page</a>.
                   </p>
                 </div>
               </div>
-              <div className="col-lg-4">
+              <div className="col-lg-6">
                 <div className="card-dark p-4 h-100">
-                  <h3 className="h5 text-green mb-3">White-Label</h3>
+                  <h3 className="h5 text-green mb-3">Fees</h3>
                   <p className="text-muted-custom mb-0">
-                    Third parties deploy branded marketplaces with custom domains and
-                    optional source filtering. 50/50 fee split with Pretrend. No upfront licensing fee.
+                    Each buy carries a fee of 0.90 VUSD or 2%, whichever is higher. There is no fee
+                    at resolution and no fee on payouts.
                   </p>
                 </div>
               </div>
-              <div className="col-lg-4">
+              <div className="col-lg-6">
                 <div className="card-dark p-4 h-100">
-                  <h3 className="h5 text-green mb-3">Open-Source Starter Kit</h3>
+                  <h3 className="h5 text-green mb-3">Payouts</h3>
                   <p className="text-muted-custom mb-0">
-                    React component library, contract ABIs, integration examples, and
-                    documentation for building custom marketplace experiences.
+                    Winners get their buy amount back plus a share of the losing buckets in proportion
+                    to their units. If no one holds the winning bucket, the pool carries over to the
+                    next market on the same feed.
+                  </p>
+                </div>
+              </div>
+              <div className="col-lg-6">
+                <div className="card-dark p-4 h-100">
+                  <h3 className="h5 text-green mb-3">Availability</h3>
+                  <p className="text-muted-custom mb-0">
+                    The marketplace is not offered where prediction markets are prohibited by
+                    regulation. Market participation is switched off there; market data and results
+                    stay public everywhere.
                   </p>
                 </div>
               </div>
@@ -1051,7 +1025,7 @@ export default function ProtocolPage() {
         </section>
 
         {/* Security */}
-        <section className="section-padding bg-dark-custom">
+        <section className="section-padding bg-dark-alt">
           <div className="container">
             <h2 className="display-6 fw-bold text-center mb-3">Security</h2>
             <p className="text-muted-custom text-center mb-5" style={{ maxWidth: '700px', margin: '0 auto' }}>
@@ -1062,9 +1036,9 @@ export default function ProtocolPage() {
                 <div className="card-dark p-4 h-100">
                   <h3 className="h5 text-green mb-3">Oracle Trust Model</h3>
                   <p className="text-muted-custom mb-0">
-                    The Notary is a trusted component. All submissions are signed and on-chain,
-                    creating an auditable history. The trend precompile is deterministic — anyone
-                    can verify results independently.
+                    TrendPulse and the Notary are operated by Pretrend. Bucket edges are frozen
+                    before each market opens, every result is signed and recorded, and the trend
+                    computation is deterministic — anyone can rerun it from the public series.
                   </p>
                 </div>
               </div>
@@ -1072,8 +1046,8 @@ export default function ProtocolPage() {
                 <div className="card-dark p-4 h-100">
                   <h3 className="h5 text-green mb-3">Data Integrity</h3>
                   <p className="text-muted-custom mb-0">
-                    OLS regression dampens outlier effects. Resolution intervals prevent flash
-                    manipulation. Multiple data points over market duration provide redundancy.
+                    OLS regression dampens single spikes, and every point in the window counts.
+                    Moving a trend means moving the underlying market across the whole window.
                   </p>
                 </div>
               </div>
@@ -1081,17 +1055,18 @@ export default function ProtocolPage() {
                 <div className="card-dark p-4 h-100">
                   <h3 className="h5 text-green mb-3">Void Protection</h3>
                   <p className="text-muted-custom mb-0">
-                    Markets are automatically voided if they receive fewer than 80% of expected
-                    updates. Participants receive refunds minus infrastructure costs already incurred.
+                    A market is voided if the oracle records fewer than a quarter of the expected
+                    points, the feed fails, or no result is recorded within 24 hours. Every buy
+                    amount is refunded in full.
                   </p>
                 </div>
               </div>
               <div className="col-lg-6">
                 <div className="card-dark p-4 h-100">
-                  <h3 className="h5 text-green mb-3">Cross-Chain Fallback</h3>
+                  <h3 className="h5 text-green mb-3">Bridge Safety</h3>
                   <p className="text-muted-custom mb-0">
-                    If HOST delivery fails, marketplace contracts support manual resolution
-                    submission with Oracle signature verification.
+                    USDT sent to the bridge sits in an escrow you can refund until the Notary signs
+                    its receipt. An interrupted transfer resumes from the swap page.
                   </p>
                 </div>
               </div>
@@ -1100,19 +1075,19 @@ export default function ProtocolPage() {
         </section>
 
         {/* CTA */}
-        <section className="section-padding bg-dark-alt">
+        <section className="section-padding bg-dark-custom">
           <div className="container text-center">
             <p className="display-5 fw-bold mb-4" style={{ maxWidth: '820px', margin: '0 auto' }}>
               <span className="d-block">The world runs on trends.</span>
               <span className="text-gradient d-block">Pretrend makes them tradable.</span>
             </p>
             <p className="text-muted-custom mb-4" style={{ maxWidth: '500px', margin: '0 auto' }}>
-              Interested in building on Pretrend or deploying a white-label marketplace?
+              Five buckets, one trend. Make your call early.
             </p>
             <div className="d-flex gap-3 justify-content-center flex-wrap">
-              <a href="mailto:info@verticalfoundation.net" className="btn btn-green btn-lg px-5">
-                Contact Us
-              </a>
+              <Link href="/" className="btn btn-green btn-lg px-5">
+                Open the Markets
+              </Link>
               <a href="/whitepaper" className="btn btn-outline-light btn-lg px-5">
                 Read the Whitepaper
               </a>
