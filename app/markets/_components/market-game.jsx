@@ -142,6 +142,20 @@ export function MarketGame({ market }) {
   });
   const boughtPrev = !!prevPosQ.data && prevPosQ.data.units.some((u) => u > 0n);
 
+  // The wallet's buy in the open market, shown on the chart: its largest bucket by amount.
+  const livePosQ = useReadContract({
+    address: PRETREND_MARKETS_ADDRESS, abi: PRETREND_MARKETS_ABI, chainId: VITRUVEO_CHAIN_ID,
+    functionName: 'positionOf', args: [BigInt(typeId || 0), BigInt(win?.start || 0), address || zeroAddress],
+    query: { enabled: !!typeId && !!address && !!win?.start, refetchInterval: 4000 },
+  });
+  const liveBuy = (() => {
+    const p = livePosQ.data;
+    if (!p) return null;
+    let best = null;
+    for (let b = 0; b < 5; b++) if (p.units[b] > 0n && (best === null || p.amount[b] > p.amount[best])) best = b;
+    return best;
+  })();
+
   // When a window this wallet bought into ends while the page is open, poll until it is settled, then show it once.
   useEffect(() => {
     if (!win || result) return undefined;
@@ -235,7 +249,7 @@ export function MarketGame({ market }) {
             market={market}
             win={win}
             thresholds={roundThresholds}
-            call={result ? heldBucket : call}
+            call={result ? heldBucket : liveBuy}
             result={result}
             canCall={geo.allowed}
             onCall={onCall}

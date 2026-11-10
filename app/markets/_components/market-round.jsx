@@ -109,7 +109,8 @@ export function MarketRound({ market, win, thresholds, call, result, canCall, on
   const liveBucket = liveTrend === null ? -1 : bucketOf(liveTrend, thresholds);
   const trueBucket = settled && !result.void ? result.bucket : -1;
   // The viewer's call: the middle of their bucket.
-  const aimBucket = call !== null && call !== undefined ? call : pick === null ? -1 : pick;
+  // the wallet's own buy (on-chain), never a mere selection
+  const aimBucket = call !== null && call !== undefined ? call : -1;
 
   // Every line is one straight line through the pivot (the fit's mean) to its height on the strip: the
   // four threshold rays end on the box boundaries, the dashed trend line where its trend lands, the
@@ -244,7 +245,7 @@ export function MarketRound({ market, win, thresholds, call, result, canCall, on
                 <rect x={BX0} y={top} width={BX1 - BX0} height={h} rx={h >= 12 ? 6 : 2} fill={boxFill(i)} stroke={boxStroke(i)} strokeWidth={boxStrokeW(i)} />
                 {h >= 26 && isPick(i) && (
                   <text x={BX0 + 8} y={top + 13} fill={EMBER} fontSize="10" fontWeight="700" letterSpacing="1.5" fontFamily={FONT}>
-                    {settled ? 'YOUR BUY' : 'SELECTED'}
+                    YOUR BUY
                   </text>
                 )}
                 {h >= 26 && isLive(i) && (
@@ -401,7 +402,7 @@ export function MarketRound({ market, win, thresholds, call, result, canCall, on
             <span style={{ color: liveLineColor, fontWeight: 600 }}>{liveTrend === null ? '…' : fmtAbs(liveTrend, market, decimals)}</span>
             {liveBucket >= 0 ? <> &middot; in <span style={{ color: liveLineColor, fontWeight: 600 }}>{BUCKET_NAMES[liveBucket]}</span></> : null}
             {called ? (
-              <> &middot; selected <span style={{ color: EMBER, fontWeight: 600 }}>{BUCKET_NAMES[call]}</span></>
+              <> &middot; your buy <span style={{ color: EMBER, fontWeight: 600 }}>{BUCKET_NAMES[call]}</span></>
             ) : !canCall ? null : phase === 'open' ? (
               <> &middot; pick the bucket the trend will settle in, on the strip or below</>
             ) : (
