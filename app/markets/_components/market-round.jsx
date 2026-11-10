@@ -134,13 +134,10 @@ export function MarketRound({ market, win, thresholds, call, result, canCall, on
     setPick(i);
     onCall(i);
   };
-  // A fresh pick each window, preselected to the bucket the live trend is in so a call is one click away.
+  // A fresh selection each window; nothing is selected until the viewer clicks a bucket.
   useEffect(() => {
     setPick(null);
   }, [start]);
-  useEffect(() => {
-    if (pick === null && canPick && liveBucket >= 0 && (call === null || call === undefined)) setPick(liveBucket);
-  }, [pick, canPick, liveBucket, call]);
   // Two marks: the bucket the trend is in (live, or the settled answer) is FILLED in its color; the
   // viewer's call is OUTLINED in ember, the color of their line. One bucket can carry both.
   const isLive = (i) => (settled ? i === trueBucket : i === liveBucket);
@@ -241,13 +238,13 @@ export function MarketRound({ market, win, thresholds, call, result, canCall, on
                 className={canPick ? 'ptm-bucket-pick' : undefined}
                 onClick={() => choose(i)}
                 role={canPick ? 'button' : undefined}
-                aria-label={canPick ? `Call ${name}` : undefined}
+                aria-label={canPick ? `Select ${name}` : undefined}
                 aria-pressed={canPick ? aimBucket === i : undefined}
               >
                 <rect x={BX0} y={top} width={BX1 - BX0} height={h} rx={h >= 12 ? 6 : 2} fill={boxFill(i)} stroke={boxStroke(i)} strokeWidth={boxStrokeW(i)} />
                 {h >= 26 && isPick(i) && (
                   <text x={BX0 + 8} y={top + 13} fill={EMBER} fontSize="10" fontWeight="700" letterSpacing="1.5" fontFamily={FONT}>
-                    {called || settled ? 'YOUR CALL' : 'PICK'}
+                    {settled ? 'YOUR BUY' : 'SELECTED'}
                   </text>
                 )}
                 {h >= 26 && isLive(i) && (
@@ -392,7 +389,7 @@ export function MarketRound({ market, win, thresholds, call, result, canCall, on
               OLS answer <span className="ptm-ink">{result.fit ? fmtAbs(result.fit.trendAbs, market, decimals) : '…'}</span> ({BUCKET_NAMES[trueBucket]})
               {called ? (
                 <>
-                  {' '}&middot; your pick <span style={{ color: EMBER }}>{BUCKET_NAMES[call]}</span> &middot;{' '}
+                  {' '}&middot; your buy <span style={{ color: EMBER }}>{BUCKET_NAMES[call]}</span> &middot;{' '}
                   {hit ? <strong className="ptm-ink">Hit</strong> : <span>miss</span>}
                 </>
               ) : null}
@@ -404,7 +401,7 @@ export function MarketRound({ market, win, thresholds, call, result, canCall, on
             <span style={{ color: liveLineColor, fontWeight: 600 }}>{liveTrend === null ? '…' : fmtAbs(liveTrend, market, decimals)}</span>
             {liveBucket >= 0 ? <> &middot; in <span style={{ color: liveLineColor, fontWeight: 600 }}>{BUCKET_NAMES[liveBucket]}</span></> : null}
             {called ? (
-              <> &middot; your pick <span style={{ color: EMBER, fontWeight: 600 }}>{BUCKET_NAMES[call]}</span></>
+              <> &middot; selected <span style={{ color: EMBER, fontWeight: 600 }}>{BUCKET_NAMES[call]}</span></>
             ) : !canCall ? null : phase === 'open' ? (
               <> &middot; pick the bucket the trend will settle in, on the strip or below</>
             ) : (
