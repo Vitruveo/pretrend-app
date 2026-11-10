@@ -41,7 +41,6 @@ const INCLUSION_S = 15n; // allowance for signing and block inclusion when setti
 const n = (wei, d = 2) => (wei === undefined || wei === null ? '—' : Number(formatUnits(wei, 18)).toLocaleString('en-US', { minimumFractionDigits: d, maximumFractionDigits: d }));
 const short = (a) => `${a.slice(0, 6)}…${a.slice(-4)}`;
 const localTime = (s) => new Date(Number(s) * 1000).toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' });
-const mmss = (s) => `${Math.floor(s / 60)}:${String(Math.max(0, Math.floor(s % 60))).padStart(2, '0')}`;
 
 function parseAmount(text) {
   if (!/^\d*(\.\d{0,18})?$/.test(text) || text === '' || text === '.') return null;
@@ -175,7 +174,6 @@ export function BuyPanel({ market, win, viewStart, allowed, bucket: selBucket, o
   const lockS = snap ? BigInt(snap.marketType.lockS) : 1n;
   const depth = snap ? snap.marketType.depth : 1n;
   const elapsed = BigInt(Math.max(0, Math.min(Number(lockS), Math.floor(now - start))));
-  const lockAt = snap ? Number(snap.lockAt) : null;
   const beforeLaunch = snap && now < Number(snap.launchTs);
   const clockOpen = !!snap && win?.phase === 'open' && !snap.paused && snap.marketType.active && Number(snap.market.status) === 0;
   const isOpen = clockOpen && (!beforeLaunch || raw.open || !fresh); // before launch only the contract knows the allowlist
@@ -185,7 +183,7 @@ export function BuyPanel({ market, win, viewStart, allowed, bucket: selBucket, o
   else if (snap.paused) state = 'Markets are paused';
   else if (!allowed) state = 'Market participation is switched off for your country';
   else if (beforeLaunch && !(fresh && raw.open) && clockOpen) state = `Buying opens at ${localTime(snap.launchTs)}`;
-  else if (isOpen) state = `Open · buys close in ${mmss(lockAt - now)}`;
+  else if (isOpen) state = ''; // the chart already counts down to the close
   else if (now < Number(snap.endAt)) state = 'Locked · the trend is completing';
   else state = 'Market ended';
 
@@ -306,7 +304,7 @@ export function BuyPanel({ market, win, viewStart, allowed, bucket: selBucket, o
         </div>
 
         <div className="col-md-6 d-flex flex-column text-center">
-          <label className="ptm-ink fw-bold mb-2 d-block" htmlFor="ptm-amount" style={{ fontSize: 'clamp(1.4rem, 3vw, 1.9rem)', letterSpacing: '0.04em' }}>Amount (VUSD)</label>
+          <label className="ptm-ink fw-bold mb-1 d-block" htmlFor="ptm-amount" style={{ fontSize: '1.2rem', letterSpacing: '0.04em' }}>Amount (VUSD)</label>
           <input
             id="ptm-amount"
             className="form-control bg-transparent text-white ptm-mono text-center fw-bold"
@@ -315,7 +313,7 @@ export function BuyPanel({ market, win, viewStart, allowed, bucket: selBucket, o
             value={viewing ? '' : text}
             disabled={viewing}
             onChange={(e) => setText(e.target.value.replace(',', '.'))}
-            style={{ borderColor: 'rgba(255,255,255,0.25)', fontSize: 'clamp(2.4rem, 6vw, 3.6rem)', lineHeight: 1.1, padding: '0.35rem 0.5rem' }}
+            style={{ borderColor: 'rgba(255,255,255,0.25)', fontSize: '2rem', lineHeight: 1.1, padding: '0.2rem 0.5rem' }}
           />
           <div className="d-flex gap-2 mt-2 flex-wrap justify-content-center">
             {QUICK.map((v) => (
