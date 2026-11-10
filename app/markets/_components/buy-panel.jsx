@@ -151,6 +151,9 @@ export function BuyPanel({ market, win, allowed, bucket: selBucket, onBucket, on
   // the market of the page clock's window: a new window is a new query, fetched the moment it starts
   const start = win?.start ?? 0;
   const snapQ = useReadContract({ ...M, functionName: 'snapshot', args: [BigInt(typeId || 0), BigInt(start), address || zeroAddress], query: { enabled: !!typeId && !!start, refetchInterval: 4000, placeholderData: keepPreviousData } });
+  // the market that ended last, kept on screen with its result and payouts
+  const prevStart = start ? start - market.windowS : 0;
+  const prevQ = useReadContract({ ...M, functionName: 'snapshot', args: [BigInt(typeId || 0), BigInt(prevStart), address || zeroAddress], query: { enabled: !!typeId && !!prevStart, refetchInterval: 8000 } });
   const vusdQ = useReadContract({ address: VUSD_ADDRESS, abi: erc20Abi, functionName: 'balanceOf', args: [address || zeroAddress], chainId: VITRUVEO_CHAIN_ID, query: { enabled: !!address, refetchInterval: 10000 } });
   const vtruQ = useBalance({ address, chainId: VITRUVEO_CHAIN_ID, query: { enabled: !!address, refetchInterval: 30000 } });
 
@@ -327,6 +330,25 @@ export function BuyPanel({ market, win, allowed, bucket: selBucket, onBucket, on
         </div>
         {snap ? <PositionsTable snap={snap} me={address} /> : <p className="ptm-faint small mb-0">Loading…</p>}
       </div>
+
+      {prevQ.data && Number(prevQ.data.market.participantCount) > 0 && (() => {
+        const ps = prevQ.data;
+        const st = Number(ps.market.status);
+        const outcome = st === 1 ? <span style={{ color: BUCKET_COLORS[Number(ps.market.winner)], fontWeight: 600 }}>{BUCKET_NAMES[Number(ps.market.winner)]} won</span>
+          : st === 2 ? <span className="ptm-faint">void, buys refunded</span>
+          : <span className="ptm-faint">settling…</span>;
+        return (
+          <div className="mt-4">
+            <div className="d-flex justify-content-between align-items-baseline flex-wrap gap-2 mb-2">
+              <h3 className="h6 fw-bold mb-0 ptm-ink">Last market, {localTime(prevStart)} · {outcome}</h3>
+              <span className="small ptm-faint ptm-mono">
+                {n(ps.market.total)} VUSD in · {Number(ps.market.participantCount)} participant{Number(ps.market.participantCount) === 1 ? '' : 's'}
+              </span>
+            </div>
+            <PositionsTable snap={ps} me={address} />
+          </div>
+        );
+      })()}
     </div>
   );
 }
