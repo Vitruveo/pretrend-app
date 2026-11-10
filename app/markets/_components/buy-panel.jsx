@@ -1,6 +1,7 @@
 'use client';
 
 import { useMemo, useState } from 'react';
+import { keepPreviousData } from '@tanstack/react-query';
 import { useAccount, useBalance, useReadContract } from 'wagmi';
 import { useConnectModal } from '@rainbow-me/rainbowkit';
 import { erc20Abi, formatUnits, parseUnits, zeroAddress } from 'viem';
@@ -12,6 +13,30 @@ import { buyUnits, claimAll, errText } from './buy-exec';
 const M = { address: PRETREND_MARKETS_ADDRESS, abi: PRETREND_MARKETS_ABI, chainId: VITRUVEO_CHAIN_ID };
 const ORDER = [4, 3, 2, 1, 0]; // Moon first, as on the strip
 const QUICK = [10, 25, 50, 100];
+
+// Timeslope pricing, the contract's exact integer math (PretrendMarkets._price / _fill), so the panel can price and
+// quote from the page clock: the chain's block time trails it by a few seconds at every market start.
+const ONE = 10n ** 18n;
+const START = ONE / 10n;
+const RAMP = ONE - START;
+function priceAt(lockS, depth, elapsed, u) {
+  const p = START + (RAMP * elapsed) / lockS + (RAMP * u) / (u + depth);
+  return p > ONE ? ONE : p;
+}
+function fillUnits(lockS, depth, elapsed, u0, amount) {
+  const slice = amount / 10n;
+  let spent = 0n;
+  let u = u0;
+  for (let i = 0; i < 10; i++) {
+    const s = i === 9 ? amount - spent : slice;
+    if (s === 0n) continue;
+    const d0 = (s * ONE) / priceAt(lockS, depth, elapsed, u);
+    u += (s * ONE) / priceAt(lockS, depth, elapsed, u + d0 / 2n);
+    spent += s;
+  }
+  return u - u0;
+}
+const INCLUSION_S = 15n; // allowance for signing and block inclusion when setting the minimum units
 
 const n = (wei, d = 2) => (wei === undefined || wei === null ? '—' : Number(formatUnits(wei, 18)).toLocaleString('en-US', { minimumFractionDigits: d, maximumFractionDigits: d }));
 const short = (a) => `${a.slice(0, 6)}…${a.slice(-4)}`;
@@ -123,33 +148,56 @@ export function BuyPanel({ market, win, allowed, bucket: selBucket, onBucket, on
   const [busy, setBusy] = useState(false);
   const [msg, setMsg] = useState(null);
 
-  const snapQ = useReadContract({ ...M, functionName: 'snapshot', args: [BigInt(typeId || 0), 0n, address || zeroAddress], query: { enabled: !!typeId, refetchInterval: 4000 } });
+  // the market of the page clock's window: a new window is a new query, fetched the moment it starts
+  const start = win?.start ?? 0;
+  const snapQ = useReadContract({ ...M, functionName: 'snapshot', args: [BigInt(typeId || 0), BigInt(start), address || zeroAddress], query: { enabled: !!typeId && !!start, refetchInterval: 4000, placeholderData: keepPreviousData } });
   const vusdQ = useReadContract({ address: VUSD_ADDRESS, abi: erc20Abi, functionName: 'balanceOf', args: [address || zeroAddress], chainId: VITRUVEO_CHAIN_ID, query: { enabled: !!address, refetchInterval: 10000 } });
   const vtruQ = useBalance({ address, chainId: VITRUVEO_CHAIN_ID, query: { enabled: !!address, refetchInterval: 30000 } });
 
   const amount = parseAmount(text);
-  const quoteQ = useReadContract({ ...M, functionName: 'quote', args: [BigInt(typeId || 0), bucket ?? 0, amount ?? 0n], query: { enabled: !!typeId && bucket !== null && amount !== null, refetchInterval: 4000 } });
 
   if (!typeId) return null;
-  const snap = snapQ.data;
+  const raw = snapQ.data;
   const vusd = vusdQ.data;
   const noGas = isConnected && vtruQ.data && vtruQ.data.value === 0n;
-  const quote = quoteQ.data;
 
-  // state line
+  // Until the new window's read lands, the previous market's data stands in with its buys zeroed: a market
+  // always starts empty.
+  const fresh = !!raw && Number(raw.market.start) === start;
+  const zero5 = [0n, 0n, 0n, 0n, 0n];
+  const snap = raw && (fresh ? raw : { ...raw, market: { ...raw.market, start: BigInt(start), status: 0, amount: zero5, units: zero5, total: 0n, participantCount: 0n }, positions: [], mine: null, lockAt: BigInt(start) + raw.marketType.lockS, endAt: BigInt(start) + raw.marketType.windowS });
+
+  // clock-driven state, prices and quote
   const now = win?.now ?? Date.now() / 1000;
+  const lockS = snap ? BigInt(snap.marketType.lockS) : 1n;
+  const depth = snap ? snap.marketType.depth : 1n;
+  const elapsed = BigInt(Math.max(0, Math.min(Number(lockS), Math.floor(now - start))));
   const lockAt = snap ? Number(snap.lockAt) : null;
   const beforeLaunch = snap && now < Number(snap.launchTs);
+  const clockOpen = !!snap && win?.phase === 'open' && !snap.paused && snap.marketType.active && Number(snap.market.status) === 0;
+  const isOpen = clockOpen && (!beforeLaunch || raw.open || !fresh); // before launch only the contract knows the allowlist
+  const prices = snap ? snap.market.units.map((u) => priceAt(lockS, depth, elapsed, u)) : null;
   let state;
   if (!snap) state = snapQ.isError ? 'Market contract unreachable' : 'Loading market…';
   else if (snap.paused) state = 'Markets are paused';
   else if (!allowed) state = 'Market participation is switched off for your country';
-  else if (beforeLaunch && !snap.open) state = `Buying opens at ${localTime(snap.launchTs)}`;
-  else if (snap.open) state = `Open · buys close in ${mmss(lockAt - now)}`;
+  else if (beforeLaunch && !(fresh && raw.open) && clockOpen) state = `Buying opens at ${localTime(snap.launchTs)}`;
+  else if (isOpen) state = `Open · buys close in ${mmss(lockAt - now)}`;
   else if (now < Number(snap.endAt)) state = 'Locked · the trend is completing';
   else state = 'Market ended';
 
-  const canBuy = !!snap && snap.open && allowed && isConnected && !busy;
+  let quote = null; // [units, fee, total, avgPrice, minUnits]
+  if (snap && bucket !== null && amount !== null && isOpen) {
+    const u0 = snap.market.units[bucket];
+    const units = fillUnits(lockS, depth, elapsed, u0, amount);
+    const later = elapsed + INCLUSION_S > lockS ? lockS : elapsed + INCLUSION_S;
+    const minUnits = (fillUnits(lockS, depth, later, u0, amount) * 99n) / 100n;
+    const pct = (amount * snap.feeBps) / 10000n;
+    const fee = pct > snap.minFee ? pct : snap.minFee;
+    quote = [units, fee, amount + fee, units > 0n ? (amount * ONE) / units : 0n, minUnits];
+  }
+
+  const canBuy = !!snap && isOpen && allowed && isConnected && !busy;
   const total = quote ? quote[2] : null;
   const short_ = amount !== null && vusd !== undefined && total !== null && vusd < total;
   const tooBig = snap && amount !== null && snap.marketType.maxBuy > 0n && amount > snap.marketType.maxBuy;
@@ -167,7 +215,7 @@ export function BuyPanel({ market, win, allowed, bucket: selBucket, onBucket, on
     setBusy(true);
     setMsg(null);
     try {
-      const minUnits = (quote[0] * 97n) / 100n; // the price moves with time between quote and inclusion
+      const minUnits = quote[4]; // priced INCLUSION_S later: the price rises with time until the buy is mined
       const hash = await buyUnits({ account: address, typeId, bucket, amount, minUnits, say: setMsg });
       setMsg(<>Bought {BUCKET_NAMES[bucket]} for {n(amount)} VUSD. <a href={`${EXPLORER}/tx/${hash}`} target="_blank" rel="noreferrer">View transaction</a></>);
       setText('');
@@ -206,7 +254,7 @@ export function BuyPanel({ market, win, allowed, bucket: selBucket, onBucket, on
               }}
             >
               <div style={{ color: BUCKET_COLORS[b], fontWeight: 700, letterSpacing: '0.08em' }}>{BUCKET_NAMES[b].toUpperCase()}</div>
-              <div className="ptm-mono" style={{ fontSize: '1.15rem' }}>{snap ? `$${Number(formatUnits(snap.price[b], 18)).toFixed(3)}` : '—'}<span className="ptm-faint small"> /unit</span></div>
+              <div className="ptm-mono" style={{ fontSize: '1.15rem' }}>{prices ? `$${Number(formatUnits(prices[b], 18)).toFixed(3)}` : '—'}<span className="ptm-faint small"> /unit</span></div>
               <div className="ptm-mono ptm-faint small">{snap ? `${n(snap.market.amount[b])} VUSD in` : ''}</div>
             </button>
           );
