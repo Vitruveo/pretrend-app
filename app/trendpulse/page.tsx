@@ -5,7 +5,7 @@ import { TrendPulseStatus } from './_components/trendpulse-status';
 
 export const metadata: Metadata = {
   title: "TrendPulse | Pretrend Protocol",
-  description: "Live status of TrendPulse, the Pretrend oracle: BTC, ETH, BNB Chain volume, news sentiment and weather feeds updating in real time with the OLS trend that resolves Pretrend markets.",
+  description: "Live status of TrendPulse, the Pretrend oracle: AI Wars momentum, pump.fun buy volume, BNB Chain volume, BTC, ETH and weather feeds updating in real time with the OLS trend that resolves Pretrend markets.",
 };
 
 export default function TrendPulsePage() {
