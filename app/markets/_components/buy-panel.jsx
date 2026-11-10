@@ -165,7 +165,7 @@ export function BuyPanel({ market, win, allowed, bucket: selBucket, onBucket, on
   // always starts empty.
   const fresh = !!raw && Number(raw.market.start) === start;
   const zero5 = [0n, 0n, 0n, 0n, 0n];
-  const snap = raw && (fresh ? raw : { ...raw, market: { ...raw.market, start: BigInt(start), status: 0, amount: zero5, units: zero5, total: 0n, participantCount: 0n }, positions: [], mine: null, lockAt: BigInt(start) + raw.marketType.lockS, endAt: BigInt(start) + raw.marketType.windowS });
+  const snap = raw && (fresh ? raw : { ...raw, market: { ...raw.market, start: BigInt(start), status: 0, amount: zero5, units: zero5, total: 0n, participantCount: 0n }, positions: [], mine: null, lockAt: BigInt(start) + BigInt(raw.marketType.lockS), endAt: BigInt(start) + BigInt(raw.marketType.windowS) });
 
   // clock-driven state, prices and quote
   const now = win?.now ?? Date.now() / 1000;
