@@ -247,7 +247,10 @@ export function MarketGame({ market }) {
             <span style={{ letterSpacing: '0.2em' }}>{liveError ? 'MARKET SERVICE UNREACHABLE' : 'CONNECTING TO TRENDPULSE…'}</span>
           </div>
         )}
-        <BuyPanel market={market} win={win} viewStart={result ? result.start : null} allowed={geo.allowed} bucket={call} onBucket={onCall} onBought={onCall} />
+        <div className="ptm-section">
+          <BuyPanel market={market} win={win} viewStart={result ? result.start : null} allowed={geo.allowed} bucket={call} onBucket={onCall} onBought={onCall} part="controls" />
+        </div>
+        <BuyPanel market={market} win={win} viewStart={result ? result.start : null} allowed={geo.allowed} bucket={call} onBucket={onCall} onBought={onCall} part="positions" />
         <div className="ptm-section d-flex justify-content-between align-items-center flex-wrap gap-2">
           <span className="ptm-faint small">
             {geo.allowed ? 'Buys are in VUSD on Vitruveo and settle on-chain when the market ends. The fee is 0.90 VUSD or 2%, whichever is higher.' : null}

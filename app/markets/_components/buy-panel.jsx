@@ -136,7 +136,9 @@ function ClaimBar({ typeId, windowS, address, onDone }) {
   );
 }
 
-export function BuyPanel({ market, win, viewStart, allowed, bucket: selBucket, onBucket, onBought }) {
+// part: 'controls' (state, bucket picker, amount, buy; sits beside the chart) or 'positions' (claims and the
+// market's positions; full width below). Both read the same cached snapshot.
+export function BuyPanel({ market, win, viewStart, allowed, bucket: selBucket, onBucket, onBought, part = 'controls' }) {
   const typeId = MARKET_TYPE_IDS[market.slug];
   const { address, isConnected } = useAccount();
   const { openConnectModal } = useConnectModal();
@@ -229,8 +231,29 @@ export function BuyPanel({ market, win, viewStart, allowed, bucket: selBucket, o
     setBusy(false);
   };
 
+  if (part === 'positions') {
+    return (
+      <div className="ptm-section">
+      <ClaimBar typeId={typeId} windowS={market.windowS} address={address} onDone={() => vusdQ.refetch()} />
+
+      <div className="mt-4">
+        <div className="d-flex justify-content-between align-items-baseline flex-wrap gap-2 mb-2">
+          <h3 className="h6 fw-bold mb-0 ptm-ink">Positions in this market</h3>
+          {snap && (
+            <span className="small ptm-faint ptm-mono">
+              {n(snap.market.total)} VUSD in · {Number(snap.market.participantCount)} participant{Number(snap.market.participantCount) === 1 ? '' : 's'}
+            </span>
+          )}
+        </div>
+        {snap ? <PositionsTable snap={snap} me={address} /> : <p className="ptm-faint small mb-0">Loading…</p>}
+      </div>
+
+      </div>
+    );
+  }
+
   return (
-    <div className="ptm-section">
+    <div className="ptm-buy">
       <div className="d-flex justify-content-between align-items-baseline flex-wrap gap-2 mb-3">
         <h2 className="h5 fw-bold mb-0 ptm-ink">{viewing ? `Market of ${localTime(start)}` : 'Buy units'}</h2>
         {viewing ? (
@@ -247,33 +270,36 @@ export function BuyPanel({ market, win, viewStart, allowed, bucket: selBucket, o
 
       {!viewing && (
         <>
-      {/* bucket picker: live price and pool per bucket */}
-      <div className="d-grid gap-2 mb-3" style={{ gridTemplateColumns: 'repeat(auto-fit, minmax(150px, 1fr))' }}>
+      <div className="row g-4">
+      {/* bucket picker in chart order (Moon on top): live price and pool per bucket */}
+      <div className="col-md-6 d-grid gap-2 align-content-start">
         {ORDER.map((b) => {
           const sel = bucket === b;
           return (
             <button
               key={b}
               type="button"
-              className="ptm-bucket-btn text-start p-2"
+              className="ptm-bucket-btn text-start px-3 py-2 d-flex align-items-center justify-content-between gap-2"
               onClick={() => setBucket(b)}
               disabled={!snap}
               style={{
                 borderRadius: 8,
-                border: `1px solid ${sel ? BUCKET_COLORS[b] : 'rgba(255,255,255,0.12)'}`,
+                border: `${sel ? 2 : 1}px solid ${sel ? BUCKET_COLORS[b] : 'rgba(255,255,255,0.12)'}`,
                 background: sel ? bucketRgba(b, 0.22) : bucketRgba(b, 0.06),
                 color: 'var(--ptm-ink)',
               }}
             >
-              <div style={{ color: BUCKET_COLORS[b], fontWeight: 700, letterSpacing: '0.08em' }}>{BUCKET_NAMES[b].toUpperCase()}</div>
-              <div className="ptm-mono" style={{ fontSize: '1.15rem' }}>{prices ? `$${Number(formatUnits(prices[b], 18)).toFixed(3)}` : '—'}<span className="ptm-faint small"> /unit</span></div>
-              <div className="ptm-mono ptm-faint small">{snap ? `${n(snap.market.amount[b])} VUSD in` : ''}</div>
+              <div>
+                <div style={{ color: BUCKET_COLORS[b], fontWeight: 700, letterSpacing: '0.08em' }}>{BUCKET_NAMES[b].toUpperCase()}</div>
+                <div className="ptm-mono ptm-faint small">{snap ? `${n(snap.market.amount[b])} VUSD in` : ''}</div>
+              </div>
+              <div className="ptm-mono text-end" style={{ fontSize: '1.1rem' }}>{prices ? `$${Number(formatUnits(prices[b], 18)).toFixed(3)}` : '—'}<div className="ptm-faint small">per unit</div></div>
             </button>
           );
         })}
       </div>
 
-      <div className="mx-auto text-center" style={{ maxWidth: '440px' }}>
+      <div className="col-md-6 text-center">
         <label className="small ptm-faint mb-1 d-block" htmlFor="ptm-amount">Amount (VUSD)</label>
         <input
           id="ptm-amount"
@@ -325,22 +351,9 @@ export function BuyPanel({ market, win, viewStart, allowed, bucket: selBucket, o
         </div>
         {msg && <div className="small mt-3 ptm-dim">{msg}</div>}
       </div>
+      </div>
         </>
       )}
-
-      <ClaimBar typeId={typeId} windowS={market.windowS} address={address} onDone={() => vusdQ.refetch()} />
-
-      <div className="mt-4">
-        <div className="d-flex justify-content-between align-items-baseline flex-wrap gap-2 mb-2">
-          <h3 className="h6 fw-bold mb-0 ptm-ink">Positions in this market</h3>
-          {snap && (
-            <span className="small ptm-faint ptm-mono">
-              {n(snap.market.total)} VUSD in · {Number(snap.market.participantCount)} participant{Number(snap.market.participantCount) === 1 ? '' : 's'}
-            </span>
-          )}
-        </div>
-        {snap ? <PositionsTable snap={snap} me={address} /> : <p className="ptm-faint small mb-0">Loading…</p>}
-      </div>
 
     </div>
   );
