@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { notFound } from 'next/navigation';
+import Link from 'next/link';
 import Header from '../../components/Header';
 import Footer from '../../components/Footer';
 import { MARKETS, findMarket } from '../../config/markets';
@@ -38,10 +39,26 @@ export default async function MarketPage({ params }: { params: Promise<{ market:
         </div>
         <section className="section-padding bg-dark-custom" style={{ paddingTop: '48px', paddingBottom: '60px' }}>
           <div className="container" style={{ maxWidth: m.game ? '1100px' : '960px' }}>
+            <nav className="d-flex align-items-center flex-wrap gap-2 mb-4" aria-label="Markets">
+              <span className="text-white-50" style={{ letterSpacing: '0.12em', textTransform: 'uppercase', fontSize: '0.8rem' }}>Markets:</span>
+              {MARKETS.filter((x) => !x.readOnly).map((x) => (
+                <Link
+                  key={x.slug}
+                  href={`/markets/${x.slug}/`}
+                  aria-current={x.slug === m.slug ? 'page' : undefined}
+                  className="rounded-pill px-3 py-1 text-decoration-none"
+                  style={{
+                    fontSize: '0.9rem',
+                    border: `1px solid ${x.slug === m.slug ? '#2f8fd6' : 'rgba(255,255,255,0.2)'}`,
+                    background: x.slug === m.slug ? 'rgba(47,143,214,0.2)' : 'transparent',
+                    color: x.slug === m.slug ? '#fff' : '#b9c5da',
+                  }}
+                >
+                  {x.name}
+                </Link>
+              ))}
+            </nav>
             <div className="text-center mb-5">
-              <p className="text-white-50 mb-2" style={{ letterSpacing: '0.12em', textTransform: 'uppercase', fontSize: '0.8rem' }}>
-                <a href="/" className="text-white-50">Trends</a> / {m.slug}{m.readOnly ? ' / read-only' : ''}
-              </p>
               <h1 className="display-5 fw-bold mb-3">
                 <span className="text-gradient">{m.name}</span>
               </h1>
