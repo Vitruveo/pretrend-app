@@ -111,11 +111,14 @@ function ClaimBar({ typeId, windowS, address, onDone }) {
   );
 }
 
-export function BuyPanel({ market, win, allowed, onBought }) {
+export function BuyPanel({ market, win, allowed, bucket: selBucket, onBucket, onBought }) {
   const typeId = MARKET_TYPE_IDS[market.slug];
   const { address, isConnected } = useAccount();
   const { openConnectModal } = useConnectModal();
-  const [bucket, setBucket] = useState(null);
+  const [ownBucket, setOwnBucket] = useState(null);
+  // controlled by the market page when it passes bucket/onBucket (the strip beside the chart selects too)
+  const bucket = selBucket === undefined ? ownBucket : selBucket;
+  const setBucket = onBucket || setOwnBucket;
   const [text, setText] = useState('');
   const [busy, setBusy] = useState(false);
   const [msg, setMsg] = useState(null);

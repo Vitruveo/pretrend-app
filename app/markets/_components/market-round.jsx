@@ -160,7 +160,7 @@ export function MarketRound({ market, win, thresholds, call, result, canCall, on
 
   let phaseText;
   if (settled) phaseText = result.void ? 'Window void: oracle gap, no answer' : `Settled ${fmtUtc(result.start)} market`;
-  else if (phase === 'open') phaseText = `Calls close in ${fmtClock(lockS - elapsed)}`;
+  else if (phase === 'open') phaseText = `Buying closes in ${fmtClock(lockS - elapsed)}`;
   else if (phase === 'locked') phaseText = `Locked: resolves in ${fmtClock(n - elapsed)}`;
   else phaseText = 'Settling…';
 
@@ -379,31 +379,6 @@ export function MarketRound({ market, win, thresholds, call, result, canCall, on
         </svg>
       ))}
 
-      {/* The call: five bucket buttons, on every screen size (the strip beside the chart is clickable too). */}
-      <div className="ptm-pick-row d-flex gap-1">
-        {BUCKET_NAMES.map((name, i) => (
-          <button
-            type="button"
-            key={name}
-            className="flex-fill text-center ptm-bucket-btn"
-            onClick={() => choose(i)}
-            disabled={!canPick}
-            aria-pressed={aimBucket === i}
-            style={{
-              background: boxFill(i),
-              border: `${isPick(i) ? 3 : 1.5}px solid ${boxStroke(i)}`,
-              borderRadius: '6px',
-              padding: '10px 0',
-              fontFamily: FONT,
-              fontSize: '0.95rem',
-              fontWeight: 600,
-              color: boxText(i),
-            }}
-          >
-            {name}
-          </button>
-        ))}
-      </div>
 
       <div className="text-center mt-3" style={{ minHeight: '1.6em' }}>
         {settled ? (
@@ -414,7 +389,7 @@ export function MarketRound({ market, win, thresholds, call, result, canCall, on
               OLS answer <span className="ptm-ink">{result.fit ? fmtAbs(result.fit.trendAbs, market, decimals) : '…'}</span> ({BUCKET_NAMES[trueBucket]})
               {called ? (
                 <>
-                  {' '}&middot; your call <span style={{ color: EMBER }}>{BUCKET_NAMES[call]}</span> &middot;{' '}
+                  {' '}&middot; your pick <span style={{ color: EMBER }}>{BUCKET_NAMES[call]}</span> &middot;{' '}
                   {hit ? <strong className="ptm-ink">Hit</strong> : <span>miss</span>}
                 </>
               ) : null}
@@ -426,13 +401,11 @@ export function MarketRound({ market, win, thresholds, call, result, canCall, on
             <span style={{ color: liveLineColor, fontWeight: 600 }}>{liveTrend === null ? '…' : fmtAbs(liveTrend, market, decimals)}</span>
             {liveBucket >= 0 ? <> &middot; in <span style={{ color: liveLineColor, fontWeight: 600 }}>{BUCKET_NAMES[liveBucket]}</span></> : null}
             {called ? (
-              <> &middot; your call <span style={{ color: EMBER, fontWeight: 600 }}>{BUCKET_NAMES[call]}</span>{phase === 'open' ? ' (click another bucket to change it)' : ''}</>
-            ) : !canCall ? (
-              <> &middot; calls are not available in your country</>
-            ) : phase === 'open' ? (
-              <> &middot; click the bucket the trend will settle in</>
+              <> &middot; your pick <span style={{ color: EMBER, fontWeight: 600 }}>{BUCKET_NAMES[call]}</span></>
+            ) : !canCall ? null : phase === 'open' ? (
+              <> &middot; pick the bucket the trend will settle in, on the strip or below</>
             ) : (
-              <> &middot; calls are closed for this window</>
+              <> &middot; buying is closed for this window</>
             )}
           </span>
         )}

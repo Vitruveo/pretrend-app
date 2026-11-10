@@ -185,7 +185,7 @@ export function MarketGame({ market }) {
             <span style={{ letterSpacing: '0.2em' }}>{liveError ? 'MARKET SERVICE UNREACHABLE' : 'CONNECTING TO TRENDPULSE…'}</span>
           </div>
         )}
-        <BuyPanel market={market} win={win} allowed={geo.allowed} onBought={onCall} />
+        <BuyPanel market={market} win={win} allowed={geo.allowed} bucket={call} onBucket={onCall} onBought={onCall} />
         <div className="ptm-section d-flex justify-content-between align-items-center flex-wrap gap-2">
           <span className="ptm-faint small">
             {geo.allowed

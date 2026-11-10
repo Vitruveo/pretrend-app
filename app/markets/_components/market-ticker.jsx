@@ -28,7 +28,7 @@ export function MarketTicker({ market, win, thresholds, calibration, lastResult 
     ['LIVE OLS', projected === null ? '…' : fmtAbs(projected, market), projected !== null && projected >= 0 ? 'signal' : 'ember'],
     ['BUCKET', bucket >= 0 ? BUCKET_NAMES[bucket].toUpperCase() : '…', 'ink'],
     ['PHASE', win ? win.phase.toUpperCase() : '…', win?.phase === 'open' ? 'signal' : 'ember'],
-    [win?.phase === 'open' ? 'CALLS CLOSE' : 'NEXT MARKET', win ? fmtClock((win.phase === 'open' ? win.lockS : rules.gameS) - win.elapsed) : '…', 'ink'],
+    [win?.phase === 'open' ? 'BUYING CLOSES' : 'NEXT MARKET', win ? fmtClock((win.phase === 'open' ? win.lockS : rules.gameS) - win.elapsed) : '…', 'ink'],
     ['LAST RESULT', lastResult ? (lastResult.void ? 'VOID' : BUCKET_NAMES[lastResult.bucket].toUpperCase()) : '…', 'ink'],
     ['SIGNAL CADENCE', `${market.cadenceS}S`, 'ink'],
     ['MARKET WINDOW', market.windowLabel.toUpperCase().replace('-MIN', 'M'), 'ink'],
