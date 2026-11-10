@@ -82,12 +82,11 @@ export function Leaderboard() {
   }, [data, sort]);
 
   const me = address ? address.toLowerCase() : null;
-  const mine = me ? rows.find((r) => r.address === me) : null;
   const rankOf = (r) => rows.indexOf(r) + 1;
   const clickSort = (key) => setSort((s) => (s.key === key ? { key, dir: -s.dir } : { key, dir: -1 }));
 
-  const renderRow = (r, pinned) => (
-    <tr key={pinned ? `pin-${r.address}` : r.address} style={pinned || r.address === me ? { background: 'rgba(47,143,214,0.12)' } : undefined}>
+  const renderRow = (r) => (
+    <tr key={r.address} style={r.address === me ? { background: 'rgba(47,143,214,0.12)' } : undefined}>
       <td className="ptm-mono">{rankOf(r)}</td>
       <td className="ptm-mono">
         <a href={`${EXPLORER}/address/${r.address}`} target="_blank" rel="noreferrer" style={{ color: 'var(--ptm-ink)', textDecoration: 'underline', textDecorationColor: 'rgba(238,243,251,0.4)', textUnderlineOffset: '3px' }}>{short(r.address)}</a>
@@ -128,8 +127,7 @@ export function Leaderboard() {
                 </tr>
               </thead>
               <tbody>
-                {mine && renderRow(mine, true)}
-                {rows.map((r) => renderRow(r, false))}
+                {rows.map((r) => renderRow(r))}
               </tbody>
             </table>
           </div>
