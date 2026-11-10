@@ -10,6 +10,10 @@ import { MarketRulebook } from './market-rulebook';
 import { fmtAbs, fmtUtc } from './market-format';
 import { useGeo } from './geo';
 import { BuyPanel } from './buy-panel';
+import { useAccount, useReadContract } from 'wagmi';
+import { zeroAddress } from 'viem';
+import { MARKET_TYPE_IDS, PRETREND_MARKETS_ABI, PRETREND_MARKETS_ADDRESS } from '../../config/pretrend-markets';
+import { VITRUVEO_CHAIN_ID } from '../../config/vusd';
 
 const RECENT = 8;
 
@@ -92,6 +96,7 @@ export function MarketGame({ market }) {
   const [recent, setRecent] = useState([]);
 
   const geo = useGeo();
+  const { address } = useAccount();
   const win = useLiveWindow(market, live);
   const thresholds = (windowInfo && windowInfo.start === win?.start ? windowInfo.thresholds : null) || live?.thresholds || market.fallbackThresholds;
   const call = win ? calls[win.start] ?? null : null;
@@ -152,6 +157,18 @@ export function MarketGame({ market }) {
     return () => { stop = true; clearInterval(id); };
   }, [win?.start, win?.phase, calls, result, resultFor, market.slug, rules]); // eslint-disable-line react-hooks/exhaustive-deps
 
+  // Confetti when the connected wallet holds units in the winning bucket of the market just settled.
+  const typeId = MARKET_TYPE_IDS[market.slug];
+  const posQ = useReadContract({
+    address: PRETREND_MARKETS_ADDRESS,
+    abi: PRETREND_MARKETS_ABI,
+    chainId: VITRUVEO_CHAIN_ID,
+    functionName: 'positionOf',
+    args: [BigInt(typeId || 0), BigInt(result?.start || 0), address || zeroAddress],
+    query: { enabled: !!typeId && !!result && !!address },
+  });
+  const won = !!result && !result.void && !!posQ.data && posQ.data.units[result.bucket] > 0n;
+
   const dismiss = () => setResult(null);
   const lastResult = recent.length ? recent[0] : null;
   const roundThresholds = result?.thresholds || thresholds;
@@ -179,6 +196,7 @@ export function MarketGame({ market }) {
             canCall={geo.allowed}
             onCall={onCall}
             onDismiss={dismiss}
+            celebrate={won}
           />
         ) : (
           <div style={{ minHeight: '420px' }} className="d-flex align-items-center justify-content-center ptm-faint">

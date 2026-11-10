@@ -28,7 +28,7 @@ function rnd(i, salt) {
 // One live round of a market. `win` is the current (or, with a result, the settled) window:
 // { start, points, trailing, phase, elapsed, lockS, liveFit, now }. `call` is the viewer's bucket for
 // that window (or null). `result` is the settled window once the server has fitted it.
-export function MarketRound({ market, win, thresholds, call, result, canCall, onCall, onDismiss }) {
+export function MarketRound({ market, win, thresholds, call, result, canCall, onCall, onDismiss, celebrate }) {
   const rules = rulesFor(market);
   const n = rules.gameS;
   const [pick, setPick] = useState(null); // bucket chosen before it is confirmed as the call
@@ -37,7 +37,7 @@ export function MarketRound({ market, win, thresholds, call, result, canCall, on
 
   const confetti = useMemo(
     () =>
-      result && !result.void && call !== null && call === result.bucket
+      result && !result.void && (celebrate ?? (call !== null && call === result.bucket))
         ? Array.from({ length: 90 }, (_, i) => ({
             id: i,
             left: rnd(i, 1) * 100,
@@ -49,7 +49,7 @@ export function MarketRound({ market, win, thresholds, call, result, canCall, on
             drift: -40 + rnd(i, 7) * 80,
           }))
         : null,
-    [result, call]
+    [result, call, celebrate]
   );
 
   // Scrolling view: the plot always shows the trailing window with the newest point at the right

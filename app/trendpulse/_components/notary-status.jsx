@@ -67,6 +67,8 @@ export function NotaryStatus() {
             <dd style={{ fontVariantNumeric: 'tabular-nums' }}>{st ? ago(st.pollAgeSeconds) : '—'}</dd>
             <dt>Settled</dt>
             <dd style={{ fontVariantNumeric: 'tabular-nums' }}>{st && st.totals ? `${st.totals.resolved} resolved, ${st.totals.voided} voided` : '—'}</dd>
+            <dt>Paid out</dt>
+            <dd style={{ fontVariantNumeric: 'tabular-nums' }}>{st && st.totals && st.totals.paidVusd != null ? `${Number(st.totals.paidVusd).toFixed(2)} VUSD to ${st.totals.payouts} wallet${st.totals.payouts === 1 ? '' : 's'}` : '—'}</dd>
             {markets.map(([slug, m]) => (
               <span key={slug} style={{ display: 'contents' }}>
                 <dt>{NAMES[slug] || slug}</dt>
@@ -95,15 +97,17 @@ export function NotaryStatus() {
                 </thead>
                 <tbody>
                   {recent.map((r) => (
-                    <tr key={`${r.slug}-${r.start}`}>
+                    <tr key={`${r.slug}-${r.start}-${r.action}-${r.tx}`}>
                       <td>{NAMES[r.slug] || r.slug}</td>
                       <td>{fmtTime(r.start)}</td>
                       <td>
                         {r.action === 'void'
                           ? <span style={{ color: '#a3a3a3' }}>Void ({r.points} pts)</span>
-                          : <span style={{ color: BUCKET_COLORS[r.winner] }}>{BUCKET_NAMES[r.winner] ?? '—'}</span>}
+                          : r.action === 'payout'
+                            ? <span style={{ color: '#4ade80' }}>Paid {r.accounts} wallet{r.accounts === 1 ? '' : 's'}</span>
+                            : <span style={{ color: BUCKET_COLORS[r.winner] }}>{BUCKET_NAMES[r.winner] ?? '—'}</span>}
                       </td>
-                      <td className="text-end">{r.total != null ? `${Number(r.total).toFixed(2)} VUSD` : '—'}</td>
+                      <td className="text-end">{r.action === 'payout' ? `${Number(r.paid).toFixed(2)} VUSD` : r.total != null ? `${Number(r.total).toFixed(2)} VUSD` : '—'}</td>
                       <td className="text-end">{r.tx ? <a href={`${EXPLORER}/tx/${r.tx}`} target="_blank" rel="noreferrer">{short(r.tx)}</a> : '—'}</td>
                     </tr>
                   ))}
