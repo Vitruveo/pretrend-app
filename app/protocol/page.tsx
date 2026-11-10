@@ -686,7 +686,7 @@ export default function ProtocolPage() {
                 {
                   title: 'Market Contracts',
                   location: 'Vitruveo Blockchain',
-                  desc: 'Handle unit purchases in VUSD, bucket state, fees, carryover, and winner payouts. Settlement happens on Vitruveo, with no cross-chain step.',
+                  desc: 'Handle unit purchases in VUSD, bucket state, fees, and winner payouts. Settlement happens on Vitruveo, with no cross-chain step.',
                 },
                 {
                   title: 'VUSD & Bridge',
@@ -916,8 +916,7 @@ export default function ProtocolPage() {
                   <h3 className="h5 text-green mb-3">Payouts</h3>
                   <p className="text-muted-custom mb-0">
                     Winners get their buy amount back plus a share of the losing buckets in proportion
-                    to their units. If no one holds the winning bucket, the pool carries over to the
-                    next market on the same feed.
+                    to their units.
                   </p>
                 </div>
               </div>
