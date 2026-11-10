@@ -51,6 +51,9 @@ export default function Header() {
         <div className={`navbar-collapse justify-content-end ${menuOpen ? 'show' : 'collapse'}`} id="navbarNav">
           <ul className="navbar-nav gap-md-4 align-items-md-center">
             <li className="nav-item" onClick={() => setMenuOpen(false)}>
+              <a className={`nav-link ${cleanPath === '/leaderboard' ? 'active' : ''}`} href="/leaderboard">Leaderboard</a>
+            </li>
+            <li className="nav-item" onClick={() => setMenuOpen(false)}>
               <a className={`nav-link ${cleanPath === '/protocol' ? 'active' : ''}`} href="/protocol">Protocol</a>
             </li>
             <li className="nav-item" onClick={() => setMenuOpen(false)}>
