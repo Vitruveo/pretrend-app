@@ -1,6 +1,6 @@
 'use client';
 
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { BUCKET_NAMES, rulesFor, validThresholds } from '../_lib/gamemath';
 import { getLive, getSettle, getWindow } from './api';
 import { useLiveWindow } from './use-live-window';
@@ -92,7 +92,9 @@ export function MarketGame({ market }) {
   const [windowInfo, setWindowInfo] = useState(null); // frozen thresholds for the current window
   const [picks, setPicks] = useState({}); // bucket selected on this page, per window start (not stored)
   const [result, setResult] = useState(null); // the settled window shown in place of the live one
-  const [resultFor, setResultFor] = useState(null); // window start whose result is shown or awaited
+  // markets already opened on this page (auto or by hand): never reopened automatically, so Back to live sticks
+  const openedRef = useRef(new Set());
+  const loadedAtRef = useRef(Math.floor(Date.now() / 1000)); // auto-open only markets that end after page load
   const [recent, setRecent] = useState([]);
 
   const geo = useGeo();
@@ -140,19 +142,20 @@ export function MarketGame({ market }) {
   });
   const boughtPrev = !!prevPosQ.data && prevPosQ.data.units.some((u) => u > 0n);
 
-  // When a window this wallet bought into ends, poll the server until it is settled, then show it.
+  // When a window this wallet bought into ends while the page is open, poll until it is settled, then show it once.
   useEffect(() => {
     if (!win || result) return undefined;
     const prev = win.start - rules.gameS;
-    if (!boughtPrev || resultFor === prev) return undefined;
+    if (!boughtPrev || openedRef.current.has(prev)) return undefined;
+    if (prev + rules.gameS < loadedAtRef.current) return undefined; // ended before this page loaded: stay live
     if (win.now > prev + rules.gameS + 120) return undefined; // too old to replay
     let stop = false;
     const poll = async () => {
       try {
         const r = await getSettle(market.slug, prev);
-        if (stop || !r.settled) return;
+        if (stop || !r.settled || openedRef.current.has(prev)) return;
+        openedRef.current.add(prev);
         setResult(r);
-        setResultFor(prev);
       } catch (e) {
         // next poll retries
       }
@@ -160,7 +163,7 @@ export function MarketGame({ market }) {
     poll();
     const id = setInterval(poll, 3000);
     return () => { stop = true; clearInterval(id); };
-  }, [win?.start, win?.phase, boughtPrev, result, resultFor, market.slug, rules]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [win?.start, win?.phase, boughtPrev, result, market.slug, rules]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // Confetti when the connected wallet holds units in the winning bucket of the market just settled.
   const posQ = useReadContract({
@@ -198,7 +201,7 @@ export function MarketGame({ market }) {
       const r = await getSettle(market.slug, st);
       if (!r.settled) return;
       setResult(r);
-      setResultFor(st);
+      openedRef.current.add(st);
       setUrlStart(st);
       document.getElementById('ptm-play')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
     } catch (e) {
@@ -210,7 +213,6 @@ export function MarketGame({ market }) {
     const st = raw ? parseInt(raw, 10) : NaN;
     if (Number.isFinite(st) && st % rules.gameS === 0) openMarket(st);
   }, [openMarket, rules.gameS]);
-  useEffect(() => { if (result) setUrlStart(result.start); }, [result]);
   const dismiss = () => { setResult(null); setUrlStart(null); };
   const lastResult = recent.length ? recent[0] : null;
   const roundThresholds = result?.thresholds || thresholds;
