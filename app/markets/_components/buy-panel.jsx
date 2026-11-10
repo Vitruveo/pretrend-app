@@ -252,6 +252,11 @@ export function BuyPanel({ market, win, viewStart, allowed, bucket: selBucket, o
     );
   }
 
+  // One fixed layout in every state: values go blank instead of parts appearing and disappearing.
+  const dash = '—';
+  const showPrices = !viewing && isOpen && prices;
+  const note = msg || (short_ ? <>Not enough VUSD. <a href="/swap/">Swap</a></> : tooBig ? `Max ${n(snap.marketType.maxBuy, 0)} VUSD per buy` : null);
+  const noteWarn = !msg && (short_ || tooBig);
   return (
     <div className="ptm-buy">
       <div className="d-flex justify-content-between align-items-baseline flex-wrap gap-2 mb-3">
@@ -268,93 +273,79 @@ export function BuyPanel({ market, win, viewStart, allowed, bucket: selBucket, o
         )}
       </div>
 
-      {!viewing && (
-        <>
-      <div className="row g-4">
-      {/* bucket picker in chart order (Moon on top): live price and pool per bucket */}
-      <div className="col-md-6 d-grid gap-2 align-content-start">
-        {ORDER.map((b) => {
-          const sel = bucket === b;
-          return (
-            <button
-              key={b}
-              type="button"
-              className="ptm-bucket-btn text-start px-3 py-2 d-flex align-items-center justify-content-between gap-2"
-              onClick={() => setBucket(b)}
-              disabled={!snap}
-              style={{
-                borderRadius: 8,
-                border: `${sel ? 2 : 1}px solid ${sel ? BUCKET_COLORS[b] : 'rgba(255,255,255,0.12)'}`,
-                background: sel ? bucketRgba(b, 0.22) : bucketRgba(b, 0.06),
-                color: 'var(--ptm-ink)',
-              }}
-            >
-              <div>
-                <div style={{ color: BUCKET_COLORS[b], fontWeight: 700, letterSpacing: '0.08em' }}>{BUCKET_NAMES[b].toUpperCase()}</div>
-                <div className="ptm-mono ptm-faint small">{snap ? `${n(snap.market.amount[b])} VUSD in` : ''}</div>
-              </div>
-              <div className="ptm-mono text-end" style={{ fontSize: '1.1rem' }}>{prices ? `$${Number(formatUnits(prices[b], 18)).toFixed(3)}` : '—'}<div className="ptm-faint small">per unit</div></div>
-            </button>
-          );
-        })}
-      </div>
-
-      <div className="col-md-6 text-center">
-        <label className="small ptm-faint mb-1 d-block" htmlFor="ptm-amount">Amount (VUSD)</label>
-        <input
-          id="ptm-amount"
-          className="form-control bg-transparent text-white ptm-mono text-center"
-          inputMode="decimal"
-          placeholder="0.00"
-          value={text}
-          onChange={(e) => setText(e.target.value.replace(',', '.'))}
-          style={{ borderColor: 'rgba(255,255,255,0.2)', fontSize: '1.4rem' }}
-        />
-        <div className="d-flex gap-2 mt-2 flex-wrap justify-content-center">
-          {QUICK.map((v) => (
-            <button key={v} type="button" className="ptm-btn ptm-btn-ghost py-1 px-2" onClick={() => setText(String(v))}>{v}</button>
-          ))}
+      <div className="row g-4 align-items-stretch">
+        {/* bucket picker in chart order (Moon on top): live price and pool per bucket */}
+        <div className="col-md-6 d-grid gap-2 align-content-start">
+          {ORDER.map((b) => {
+            const sel = !viewing && bucket === b;
+            return (
+              <button
+                key={b}
+                type="button"
+                className="ptm-bucket-btn text-start px-3 py-2 d-flex align-items-center justify-content-between gap-2"
+                onClick={() => setBucket(b)}
+                disabled={!snap || viewing}
+                style={{
+                  borderRadius: 8,
+                  border: `${sel ? 2 : 1}px solid ${sel ? BUCKET_COLORS[b] : 'rgba(255,255,255,0.12)'}`,
+                  background: sel ? bucketRgba(b, 0.22) : bucketRgba(b, 0.06),
+                  color: 'var(--ptm-ink)',
+                }}
+              >
+                <div>
+                  <div style={{ color: BUCKET_COLORS[b], fontWeight: 700, letterSpacing: '0.08em' }}>{BUCKET_NAMES[b].toUpperCase()}</div>
+                  <div className="ptm-mono ptm-faint small">{snap ? `${n(snap.market.amount[b])} VUSD in` : dash}</div>
+                </div>
+                <div className="ptm-mono text-end" style={{ fontSize: '1.1rem' }}>
+                  {showPrices ? `$${Number(formatUnits(prices[b], 18)).toFixed(3)}` : dash}
+                  <div className="ptm-faint small">per unit</div>
+                </div>
+              </button>
+            );
+          })}
         </div>
-        {isConnected && (
+
+        <div className="col-md-6 d-flex flex-column text-center">
+          <label className="ptm-ink fw-bold mb-2 d-block" htmlFor="ptm-amount" style={{ fontSize: 'clamp(1.4rem, 3vw, 1.9rem)', letterSpacing: '0.04em' }}>Amount (VUSD)</label>
+          <input
+            id="ptm-amount"
+            className="form-control bg-transparent text-white ptm-mono text-center fw-bold"
+            inputMode="decimal"
+            placeholder="0"
+            value={viewing ? '' : text}
+            disabled={viewing}
+            onChange={(e) => setText(e.target.value.replace(',', '.'))}
+            style={{ borderColor: 'rgba(255,255,255,0.25)', fontSize: 'clamp(2.4rem, 6vw, 3.6rem)', lineHeight: 1.1, padding: '0.35rem 0.5rem' }}
+          />
+          <div className="d-flex gap-2 mt-2 flex-wrap justify-content-center">
+            {QUICK.map((v) => (
+              <button key={v} type="button" className="ptm-btn ptm-btn-ghost py-1 px-2" disabled={viewing} onClick={() => setText(String(v))}>{v}</button>
+            ))}
+          </div>
           <div className="small ptm-faint mt-2 ptm-mono">
-            Balance {vusd !== undefined ? n(vusd) : '…'} VUSD
+            Balance {isConnected && vusd !== undefined ? n(vusd) : dash} VUSD
             {noGas && <span style={{ color: '#f97316' }}> · no VTRU for gas</span>}
           </div>
-        )}
-        <div className="small ptm-mono mt-3 text-start">
-          {bucket === null ? (
-            <div className="ptm-faint text-center">Pick a bucket.</div>
-          ) : amount === null ? (
-            <div className="ptm-faint text-center">Enter an amount for {BUCKET_NAMES[bucket]}.</div>
-          ) : quote ? (
-            <div className="d-grid" style={{ gridTemplateColumns: 'auto auto', columnGap: '1rem', rowGap: '0.15rem' }}>
-              <span className="ptm-faint">Units</span><span className="text-end ptm-ink">{n(quote[0], 1)}</span>
-              <span className="ptm-faint">Avg price</span><span className="text-end ptm-ink">${Number(formatUnits(quote[3], 18)).toFixed(3)}</span>
-              <span className="ptm-faint">Fee</span><span className="text-end ptm-ink">{n(quote[1])}</span>
-              <span className="ptm-faint">Total</span><span className="text-end ptm-ink">{n(quote[2])} VUSD</span>
-              <span className="ptm-faint">If {BUCKET_NAMES[bucket]} wins</span><span className="text-end" style={{ color: '#4ade80' }}>{reward !== null ? `${n(reward)} VUSD` : '—'}</span>
-            </div>
-          ) : (
-            <div className="ptm-faint text-center">Buying is closed for this window.</div>
-          )}
+          <div className="small ptm-mono mt-3 text-start d-grid" style={{ gridTemplateColumns: 'auto auto', columnGap: '1rem', rowGap: '0.15rem' }}>
+            <span className="ptm-faint">Bucket</span><span className="text-end" style={{ color: bucket !== null && !viewing ? BUCKET_COLORS[bucket] : undefined }}>{bucket !== null && !viewing ? BUCKET_NAMES[bucket] : dash}</span>
+            <span className="ptm-faint">Units</span><span className="text-end ptm-ink">{quote ? n(quote[0], 1) : dash}</span>
+            <span className="ptm-faint">Avg price</span><span className="text-end ptm-ink">{quote ? `$${Number(formatUnits(quote[3], 18)).toFixed(3)}` : dash}</span>
+            <span className="ptm-faint">Fee</span><span className="text-end ptm-ink">{quote ? n(quote[1]) : dash}</span>
+            <span className="ptm-faint">Total</span><span className="text-end ptm-ink">{quote ? `${n(quote[2])} VUSD` : dash}</span>
+            <span className="ptm-faint">If it wins</span><span className="text-end" style={{ color: '#4ade80' }}>{reward !== null ? `${n(reward)} VUSD` : dash}</span>
+          </div>
+          <div className="small mt-2" style={{ minHeight: '1.4em', color: noteWarn ? '#f97316' : 'var(--ptm-dim)' }}>{note}</div>
+          <div className="d-grid mt-auto">
+            {!isConnected ? (
+              <button type="button" className="ptm-btn" onClick={() => openConnectModal?.()} disabled={!allowed || viewing}>Connect</button>
+            ) : (
+              <button type="button" className="ptm-btn" onClick={buy} disabled={viewing || !canBuy || bucket === null || amount === null || !quote || short_ || tooBig}>
+                {busy ? 'Working…' : bucket === null || viewing ? 'Buy' : `Buy ${BUCKET_NAMES[bucket]}`}
+              </button>
+            )}
+          </div>
         </div>
-        <div className="d-grid mt-3">
-          {!isConnected ? (
-            <button type="button" className="ptm-btn" onClick={() => openConnectModal?.()} disabled={!allowed}>Connect</button>
-          ) : (
-            <button type="button" className="ptm-btn" onClick={buy} disabled={!canBuy || bucket === null || amount === null || !quote || short_ || tooBig}>
-              {busy ? 'Working…' : bucket === null ? 'Buy' : `Buy ${BUCKET_NAMES[bucket]}`}
-            </button>
-          )}
-          {short_ && <div className="small mt-1" style={{ color: '#f97316' }}>Not enough VUSD. <a href="/swap/">Swap</a></div>}
-          {tooBig && <div className="small mt-1" style={{ color: '#f97316' }}>Max {n(snap.marketType.maxBuy, 0)} VUSD per buy</div>}
-        </div>
-        {msg && <div className="small mt-3 ptm-dim">{msg}</div>}
       </div>
-      </div>
-        </>
-      )}
-
     </div>
   );
 }
