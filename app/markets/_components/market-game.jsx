@@ -21,7 +21,7 @@ const RECENT = 8;
 const vusd = (wei) => Number(formatUnits(wei, 18)).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 
 // The connected wallet's on-chain position in each recent market: buckets held, and what it won or got back.
-function RecentMarkets({ market, rows }) {
+function RecentMarkets({ market, rows, viewStart, onOpen }) {
   const decimals = market.unit === 'usd' ? 0 : 1;
   const { address } = useAccount();
   const typeId = MARKET_TYPE_IDS[market.slug];
@@ -58,7 +58,12 @@ function RecentMarkets({ market, rows }) {
                 const bought = p ? p.amount.reduce((a, x) => a + x, 0n) : 0n;
                 const wonIt = !r.void && held.includes(r.bucket);
                 return (
-                  <tr key={r.start}>
+                  <tr
+                    key={r.start}
+                    onClick={() => onOpen(r.start)}
+                    title="Open this market"
+                    style={{ cursor: 'pointer', background: viewStart === r.start ? 'rgba(47,143,214,0.12)' : undefined }}
+                  >
                     <td className="ptm-mono">{fmtUtc(r.start)}</td>
                     <td className="ptm-mono">{r.void ? '—' : r.series.length}</td>
                     <td className="ptm-mono" style={{ textAlign: 'right' }}>{r.void ? 'void' : fmtAbs(r.fit.trendAbs, market, decimals)}</td>
@@ -177,7 +182,36 @@ export function MarketGame({ market }) {
     return best;
   })();
 
-  const dismiss = () => setResult(null);
+  // One market on screen at a time: the open one (live), or a settled one (result) opened automatically when a
+  // market this wallet bought into ends, from Recent markets, or from a ?start= link.
+  const setUrlStart = (st) => {
+    try {
+      const u = new URL(window.location.href);
+      if (st) u.searchParams.set('start', String(st)); else u.searchParams.delete('start');
+      window.history.replaceState(null, '', u.toString());
+    } catch (e) {
+      // no history API
+    }
+  };
+  const openMarket = useCallback(async (st) => {
+    try {
+      const r = await getSettle(market.slug, st);
+      if (!r.settled) return;
+      setResult(r);
+      setResultFor(st);
+      setUrlStart(st);
+      document.getElementById('ptm-play')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    } catch (e) {
+      // stays on the current view
+    }
+  }, [market.slug]);
+  useEffect(() => {
+    const raw = new URLSearchParams(window.location.search).get('start');
+    const st = raw ? parseInt(raw, 10) : NaN;
+    if (Number.isFinite(st) && st % rules.gameS === 0) openMarket(st);
+  }, [openMarket, rules.gameS]);
+  useEffect(() => { if (result) setUrlStart(result.start); }, [result]);
+  const dismiss = () => { setResult(null); setUrlStart(null); };
   const lastResult = recent.length ? recent[0] : null;
   const roundThresholds = result?.thresholds || thresholds;
   useEffect(() => {
@@ -188,7 +222,7 @@ export function MarketGame({ market }) {
     <div className="ptm">
       <MarketTicker market={market} win={win} thresholds={thresholds} calibration={live?.calibration} lastResult={lastResult} />
 
-      <div className="card-dark p-3 p-md-4 ptm-play">
+      <div id="ptm-play" className="card-dark p-3 p-md-4 ptm-play" style={{ scrollMarginTop: '90px' }}>
         {win && !validThresholds(roundThresholds) ? (
           <div style={{ minHeight: '420px' }} className="d-flex align-items-center justify-content-center text-danger" role="alert">
             <span style={{ letterSpacing: '0.2em' }}>BUCKET EDGES INVALID: {JSON.stringify(roundThresholds)}</span>
@@ -211,7 +245,7 @@ export function MarketGame({ market }) {
             <span style={{ letterSpacing: '0.2em' }}>{liveError ? 'MARKET SERVICE UNREACHABLE' : 'CONNECTING TO TRENDPULSE…'}</span>
           </div>
         )}
-        <BuyPanel market={market} win={win} allowed={geo.allowed} bucket={call} onBucket={onCall} onBought={onCall} />
+        <BuyPanel market={market} win={win} viewStart={result ? result.start : null} allowed={geo.allowed} bucket={call} onBucket={onCall} onBought={onCall} />
         <div className="ptm-section d-flex justify-content-between align-items-center flex-wrap gap-2">
           <span className="ptm-faint small">
             {geo.allowed ? 'Buys are in VUSD on Vitruveo and settle on-chain when the market ends. The fee is 0.90 VUSD or 2%, whichever is higher.' : null}
@@ -220,7 +254,7 @@ export function MarketGame({ market }) {
         </div>
       </div>
 
-      <RecentMarkets market={market} rows={recent} />
+      <RecentMarkets market={market} rows={recent} viewStart={result ? result.start : null} onOpen={openMarket} />
       <MarketRulebook market={market} />
     </div>
   );

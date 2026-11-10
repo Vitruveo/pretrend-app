@@ -136,7 +136,7 @@ function ClaimBar({ typeId, windowS, address, onDone }) {
   );
 }
 
-export function BuyPanel({ market, win, allowed, bucket: selBucket, onBucket, onBought }) {
+export function BuyPanel({ market, win, viewStart, allowed, bucket: selBucket, onBucket, onBought }) {
   const typeId = MARKET_TYPE_IDS[market.slug];
   const { address, isConnected } = useAccount();
   const { openConnectModal } = useConnectModal();
@@ -149,11 +149,9 @@ export function BuyPanel({ market, win, allowed, bucket: selBucket, onBucket, on
   const [msg, setMsg] = useState(null);
 
   // the market of the page clock's window: a new window is a new query, fetched the moment it starts
-  const start = win?.start ?? 0;
+  const viewing = viewStart != null; // a settled market is on screen: no buying, its positions and payouts
+  const start = viewing ? viewStart : win?.start ?? 0;
   const snapQ = useReadContract({ ...M, functionName: 'snapshot', args: [BigInt(typeId || 0), BigInt(start), address || zeroAddress], query: { enabled: !!typeId && !!start, refetchInterval: 4000, placeholderData: keepPreviousData } });
-  // the market that ended last, kept on screen with its result and payouts
-  const prevStart = start ? start - market.windowS : 0;
-  const prevQ = useReadContract({ ...M, functionName: 'snapshot', args: [BigInt(typeId || 0), BigInt(prevStart), address || zeroAddress], query: { enabled: !!typeId && !!prevStart, refetchInterval: 8000 } });
   const vusdQ = useReadContract({ address: VUSD_ADDRESS, abi: erc20Abi, functionName: 'balanceOf', args: [address || zeroAddress], chainId: VITRUVEO_CHAIN_ID, query: { enabled: !!address, refetchInterval: 10000 } });
   const vtruQ = useBalance({ address, chainId: VITRUVEO_CHAIN_ID, query: { enabled: !!address, refetchInterval: 30000 } });
 
@@ -234,10 +232,21 @@ export function BuyPanel({ market, win, allowed, bucket: selBucket, onBucket, on
   return (
     <div className="ptm-section">
       <div className="d-flex justify-content-between align-items-baseline flex-wrap gap-2 mb-3">
-        <h2 className="h5 fw-bold mb-0 ptm-ink">Buy units</h2>
-        <span className="ptm-mono small" style={{ color: snap?.open && allowed ? '#4ade80' : 'var(--ptm-faint)' }}>{state}</span>
+        <h2 className="h5 fw-bold mb-0 ptm-ink">{viewing ? `Market of ${localTime(start)}` : 'Buy units'}</h2>
+        {viewing ? (
+          <span className="ptm-mono small">
+            {!fresh ? <span className="ptm-faint">Loading…</span>
+              : Number(raw.market.status) === 1 ? <span style={{ color: BUCKET_COLORS[Number(raw.market.winner)], fontWeight: 600 }}>Settled · {BUCKET_NAMES[Number(raw.market.winner)]} won</span>
+              : Number(raw.market.status) === 2 ? <span className="ptm-faint">Void · buys refunded</span>
+              : <span className="ptm-faint">Settling…</span>}
+          </span>
+        ) : (
+          <span className="ptm-mono small" style={{ color: isOpen && allowed ? '#4ade80' : 'var(--ptm-faint)' }}>{state}</span>
+        )}
       </div>
 
+      {!viewing && (
+        <>
       {/* bucket picker: live price and pool per bucket */}
       <div className="d-grid gap-2 mb-3" style={{ gridTemplateColumns: 'repeat(auto-fit, minmax(150px, 1fr))' }}>
         {ORDER.map((b) => {
@@ -316,6 +325,8 @@ export function BuyPanel({ market, win, allowed, bucket: selBucket, onBucket, on
         </div>
         {msg && <div className="small mt-3 ptm-dim">{msg}</div>}
       </div>
+        </>
+      )}
 
       <ClaimBar typeId={typeId} windowS={market.windowS} address={address} onDone={() => vusdQ.refetch()} />
 
@@ -331,24 +342,6 @@ export function BuyPanel({ market, win, allowed, bucket: selBucket, onBucket, on
         {snap ? <PositionsTable snap={snap} me={address} /> : <p className="ptm-faint small mb-0">Loading…</p>}
       </div>
 
-      {prevQ.data && Number(prevQ.data.market.participantCount) > 0 && (() => {
-        const ps = prevQ.data;
-        const st = Number(ps.market.status);
-        const outcome = st === 1 ? <span style={{ color: BUCKET_COLORS[Number(ps.market.winner)], fontWeight: 600 }}>{BUCKET_NAMES[Number(ps.market.winner)]} won</span>
-          : st === 2 ? <span className="ptm-faint">void, buys refunded</span>
-          : <span className="ptm-faint">settling…</span>;
-        return (
-          <div className="mt-4">
-            <div className="d-flex justify-content-between align-items-baseline flex-wrap gap-2 mb-2">
-              <h3 className="h6 fw-bold mb-0 ptm-ink">Last market, {localTime(prevStart)} · {outcome}</h3>
-              <span className="small ptm-faint ptm-mono">
-                {n(ps.market.total)} VUSD in · {Number(ps.market.participantCount)} participant{Number(ps.market.participantCount) === 1 ? '' : 's'}
-              </span>
-            </div>
-            <PositionsTable snap={ps} me={address} />
-          </div>
-        );
-      })()}
     </div>
   );
 }
