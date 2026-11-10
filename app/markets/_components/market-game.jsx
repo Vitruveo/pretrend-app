@@ -9,6 +9,7 @@ import { MarketTicker } from './market-ticker';
 import { MarketRulebook } from './market-rulebook';
 import { fmtAbs, fmtUtc } from './market-format';
 import { useGeo } from './geo';
+import { BuyPanel } from './buy-panel';
 
 const RECENT = 8;
 
@@ -184,10 +185,11 @@ export function MarketGame({ market }) {
             <span style={{ letterSpacing: '0.2em' }}>{liveError ? 'MARKET SERVICE UNREACHABLE' : 'CONNECTING TO TRENDPULSE…'}</span>
           </div>
         )}
+        <BuyPanel market={market} win={win} allowed={geo.allowed} onBought={onCall} />
         <div className="ptm-section d-flex justify-content-between align-items-center flex-wrap gap-2">
           <span className="ptm-faint small">
             {geo.allowed
-              ? 'Calls are free and stay in this browser. Stakes, settlement and the leaderboard come with the next step of the protocol.'
+              ? 'Buys are in VUSD on Vitruveo and settle on-chain when the market ends. The fee is 0.90 VUSD or 2%, whichever is higher.'
               : 'Market features are switched off for your country. The live market and its results stay visible.'}
           </span>
           <a href="#rulebook" className="ptm-btn ptm-btn-ghost">Rulebook</a>
