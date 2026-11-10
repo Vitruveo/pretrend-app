@@ -36,18 +36,6 @@ export const TRENDPULSE_SOURCES = [
     attribution: 'Solana RPC (pump.fun program logs)',
   },
   {
-    key: 'bsc-volume',
-    label: 'BSC \u00b7 NATIVE BNB VOLUME',
-    name: 'BNB Chain Transfer Volume',
-    unit: 'bnb',
-    windowS: 30 * 60,
-    windowLabel: '30-min',
-    trendMode: 'abs',
-    desc: 'Native BNB moved on BNB Smart Chain, summed over every transaction in each one-second window (about two blocks). A spiky on-chain activity series rather than a price \u2014 a raw on-chain activity read alongside the price feeds.',
-    dataCadence: 'every second',
-    attribution: 'BSC JSON-RPC (NodeReal)',
-  },
-  {
     key: 'btcusdt',
     label: 'BTC-USDT',
     name: 'Bitcoin',
