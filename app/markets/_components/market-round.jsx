@@ -413,7 +413,7 @@ export function MarketRound({ market, win, thresholds, call, result, canCall, on
 
       {settled && (
         <div className="d-flex justify-content-center mt-3">
-          <button type="button" className="ptm-btn ptm-btn-ghost" onClick={onDismiss} disabled={!canCall}>Back to live</button>
+          <button type="button" className="ptm-btn ptm-btn-ghost" onClick={onDismiss}>Back to live</button>
         </div>
       )}
 
