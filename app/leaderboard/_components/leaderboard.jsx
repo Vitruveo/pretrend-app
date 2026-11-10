@@ -90,7 +90,7 @@ export function Leaderboard() {
     <tr key={pinned ? `pin-${r.address}` : r.address} style={pinned || r.address === me ? { background: 'rgba(47,143,214,0.12)' } : undefined}>
       <td className="ptm-mono">{rankOf(r)}</td>
       <td className="ptm-mono">
-        <a href={`${EXPLORER}/address/${r.address}`} target="_blank" rel="noreferrer">{short(r.address)}</a>
+        <a href={`${EXPLORER}/address/${r.address}`} target="_blank" rel="noreferrer" style={{ color: 'var(--ptm-ink)', textDecoration: 'underline', textDecorationColor: 'rgba(238,243,251,0.4)', textUnderlineOffset: '3px' }}>{short(r.address)}</a>
         {r.address === me && <span className="ptm-signal ms-2 small">you</span>}
         {r.inPlay > 0 && <span className="ptm-faint ms-2 small">{usd(r.inPlay)} in play</span>}
       </td>

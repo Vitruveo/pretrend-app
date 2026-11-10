@@ -79,7 +79,7 @@ function PositionsTable({ snap, me }) {
               return (
                 <tr key={`${p.account}-${b}`} style={mine ? { background: 'rgba(47,143,214,0.12)' } : undefined}>
                   <td className="ptm-mono">
-                    <a href={`${EXPLORER}/address/${p.account}`} target="_blank" rel="noreferrer">{short(p.account)}</a>
+                    <a href={`${EXPLORER}/address/${p.account}`} target="_blank" rel="noreferrer" style={{ color: 'var(--ptm-ink)', textDecoration: 'underline', textDecorationColor: 'rgba(238,243,251,0.4)', textUnderlineOffset: '3px' }}>{short(p.account)}</a>
                     {mine && <span className="ptm-signal ms-2 small">you</span>}
                   </td>
                   <td style={{ color: BUCKET_COLORS[b], fontWeight: 600 }}>{BUCKET_NAMES[b]}</td>
