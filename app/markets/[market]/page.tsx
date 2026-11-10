@@ -39,6 +39,11 @@ export default async function MarketPage({ params }: { params: Promise<{ market:
         </div>
         <section className="section-padding bg-dark-custom" style={{ paddingTop: '48px', paddingBottom: '60px' }}>
           <div className="container" style={{ maxWidth: m.game ? '1100px' : '960px' }}>
+            <div className="text-center mb-4">
+              <h1 className="display-5 fw-bold mb-0">
+                <span className="text-gradient">{m.name}</span>
+              </h1>
+            </div>
             <nav className="d-flex align-items-center flex-wrap gap-2 mb-4" aria-label="Markets">
               <span className="text-white-50" style={{ letterSpacing: '0.12em', textTransform: 'uppercase', fontSize: '0.8rem' }}>Markets:</span>
               {MARKETS.filter((x) => !x.readOnly).map((x) => (
@@ -58,14 +63,6 @@ export default async function MarketPage({ params }: { params: Promise<{ market:
                 </Link>
               ))}
             </nav>
-            <div className="text-center mb-5">
-              <h1 className="display-5 fw-bold mb-3">
-                <span className="text-gradient">{m.name}</span>
-              </h1>
-              <p className="lead text-muted-custom" style={{ maxWidth: '820px', margin: '0 auto', textWrap: 'balance' }}>
-                {m.headline}
-              </p>
-            </div>
             {m.game && <WalletTile />}
             {m.game ? <MarketGame market={m} /> : <MarketView market={m} />}
           </div>
