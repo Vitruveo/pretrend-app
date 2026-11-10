@@ -261,35 +261,33 @@ export function BuyPanel({ market, win, allowed, bucket: selBucket, onBucket, on
         })}
       </div>
 
-      <div className="row g-3 align-items-end">
-        <div className="col-md-5">
-          <label className="small ptm-faint mb-1" htmlFor="ptm-amount">Amount (VUSD)</label>
-          <input
-            id="ptm-amount"
-            className="form-control bg-transparent text-white ptm-mono"
-            inputMode="decimal"
-            placeholder="0.00"
-            value={text}
-            onChange={(e) => setText(e.target.value.replace(',', '.'))}
-            style={{ borderColor: 'rgba(255,255,255,0.2)' }}
-          />
-          <div className="d-flex gap-2 mt-2 flex-wrap">
-            {QUICK.map((v) => (
-              <button key={v} type="button" className="ptm-btn ptm-btn-ghost py-1 px-2" onClick={() => setText(String(v))}>{v}</button>
-            ))}
-          </div>
-          {isConnected && (
-            <div className="small ptm-faint mt-2 ptm-mono">
-              Balance {vusd !== undefined ? n(vusd) : '…'} VUSD
-              {noGas && <span style={{ color: '#f97316' }}> · no VTRU for gas</span>}
-            </div>
-          )}
+      <div className="mx-auto text-center" style={{ maxWidth: '440px' }}>
+        <label className="small ptm-faint mb-1 d-block" htmlFor="ptm-amount">Amount (VUSD)</label>
+        <input
+          id="ptm-amount"
+          className="form-control bg-transparent text-white ptm-mono text-center"
+          inputMode="decimal"
+          placeholder="0.00"
+          value={text}
+          onChange={(e) => setText(e.target.value.replace(',', '.'))}
+          style={{ borderColor: 'rgba(255,255,255,0.2)', fontSize: '1.4rem' }}
+        />
+        <div className="d-flex gap-2 mt-2 flex-wrap justify-content-center">
+          {QUICK.map((v) => (
+            <button key={v} type="button" className="ptm-btn ptm-btn-ghost py-1 px-2" onClick={() => setText(String(v))}>{v}</button>
+          ))}
         </div>
-        <div className="col-md-4 small ptm-mono">
+        {isConnected && (
+          <div className="small ptm-faint mt-2 ptm-mono">
+            Balance {vusd !== undefined ? n(vusd) : '…'} VUSD
+            {noGas && <span style={{ color: '#f97316' }}> · no VTRU for gas</span>}
+          </div>
+        )}
+        <div className="small ptm-mono mt-3 text-start">
           {bucket === null ? (
-            <span className="ptm-faint">Pick a bucket.</span>
+            <div className="ptm-faint text-center">Pick a bucket.</div>
           ) : amount === null ? (
-            <span className="ptm-faint">Enter an amount for {BUCKET_NAMES[bucket]}.</span>
+            <div className="ptm-faint text-center">Enter an amount for {BUCKET_NAMES[bucket]}.</div>
           ) : quote ? (
             <div className="d-grid" style={{ gridTemplateColumns: 'auto auto', columnGap: '1rem', rowGap: '0.15rem' }}>
               <span className="ptm-faint">Units</span><span className="text-end ptm-ink">{n(quote[0], 1)}</span>
@@ -299,10 +297,10 @@ export function BuyPanel({ market, win, allowed, bucket: selBucket, onBucket, on
               <span className="ptm-faint">If {BUCKET_NAMES[bucket]} wins</span><span className="text-end" style={{ color: '#4ade80' }}>{reward !== null ? `${n(reward)} VUSD` : '—'}</span>
             </div>
           ) : (
-            <span className="ptm-faint">Quoting…</span>
+            <div className="ptm-faint text-center">Buying is closed for this window.</div>
           )}
         </div>
-        <div className="col-md-3 d-grid">
+        <div className="d-grid mt-3">
           {!isConnected ? (
             <button type="button" className="ptm-btn" onClick={() => openConnectModal?.()} disabled={!allowed}>Connect</button>
           ) : (
@@ -313,8 +311,8 @@ export function BuyPanel({ market, win, allowed, bucket: selBucket, onBucket, on
           {short_ && <div className="small mt-1" style={{ color: '#f97316' }}>Not enough VUSD. <a href="/swap/">Swap</a></div>}
           {tooBig && <div className="small mt-1" style={{ color: '#f97316' }}>Max {n(snap.marketType.maxBuy, 0)} VUSD per buy</div>}
         </div>
+        {msg && <div className="small mt-3 ptm-dim">{msg}</div>}
       </div>
-      {msg && <div className="small mt-3 ptm-dim">{msg}</div>}
 
       <ClaimBar typeId={typeId} windowS={market.windowS} address={address} onDone={() => vusdQ.refetch()} />
 
