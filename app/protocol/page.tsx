@@ -141,44 +141,6 @@ const InProgressBadge = () => (
   </div>
 );
 
-const VirtuousCircleSVG = () => (
-  <svg viewBox="0 0 800 500" style={{ width: '100%', height: 'auto', display: 'block' }}>
-    <defs>
-      <marker id="vcArrow" markerWidth="9" markerHeight="8" refX="6" refY="4" orient="auto">
-        <polygon points="0 0, 9 4, 0 8" fill="#7abe4d" />
-      </marker>
-    </defs>
-
-    {/* rotating flywheel ring */}
-    <circle className="vf-dash" cx="400" cy="250" r="150" fill="none" stroke="#7abe4d" strokeOpacity="0.2" strokeWidth="2.5" strokeDasharray="6 14" />
-
-    {/* clockwise flow arrows */}
-    <path d="M500.7 100.8 A180 180 0 0 1 549.2 149.3" fill="none" stroke="#7abe4d" strokeWidth="3" markerEnd="url(#vcArrow)" />
-    <path d="M549.2 350.7 A180 180 0 0 1 500.7 399.2" fill="none" stroke="#7abe4d" strokeWidth="3" markerEnd="url(#vcArrow)" />
-    <path d="M299.3 399.2 A180 180 0 0 1 250.8 350.7" fill="none" stroke="#7abe4d" strokeWidth="3" markerEnd="url(#vcArrow)" />
-    <path d="M250.8 149.3 A180 180 0 0 1 299.3 100.8" fill="none" stroke="#7abe4d" strokeWidth="3" markerEnd="url(#vcArrow)" />
-
-    {/* nodes */}
-    <rect x="305" y="39" width="190" height="62" rx="12" fill="#15211a" stroke="#7abe4d" strokeWidth="1.2" />
-    <text x="400" y="76" textAnchor="middle" fill="#a3d97a" fontSize="19" fontWeight="600">Pretrend grows</text>
-
-    <rect x="485" y="219" width="190" height="62" rx="12" fill="#15211a" stroke="#7abe4d" strokeWidth="1.2" />
-    <text x="580" y="256" textAnchor="middle" fill="#a3d97a" fontSize="19" fontWeight="600">VTRU strengthens</text>
-
-    <rect x="280" y="399" width="240" height="62" rx="12" fill="#15211a" stroke="#7abe4d" strokeWidth="1.2" />
-    <text x="400" y="436" textAnchor="middle" fill="#a3d97a" fontSize="19" fontWeight="600">Vitruveo ecosystem grows</text>
-
-    <rect x="125" y="219" width="190" height="62" rx="12" fill="#15211a" stroke="#7abe4d" strokeWidth="1.2" />
-    <text x="220" y="256" textAnchor="middle" fill="#a3d97a" fontSize="19" fontWeight="600">VIBE holders earn</text>
-
-    {/* center split */}
-    <text x="400" y="240" textAnchor="middle" fill="#7abe4d" fontSize="44" fontWeight="700">2%</text>
-    <text x="400" y="263" textAnchor="middle" fill="rgba(255,255,255,0.6)" fontSize="14">of Pretrend revenue</text>
-    <text x="400" y="286" textAnchor="middle" fill="rgba(255,255,255,0.85)" fontSize="14">1% → VTRU liquidity</text>
-    <text x="400" y="307" textAnchor="middle" fill="rgba(255,255,255,0.85)" fontSize="14">1% → VIBE holders</text>
-  </svg>
-);
-
 export default function ProtocolPage() {
   return (
     <>
@@ -628,59 +590,8 @@ export default function ProtocolPage() {
           </div>
         </section>
 
-        {/* VIBE Revenue Share — Virtuous Circle */}
-        <section className="section-padding bg-dark-alt">
-          <div className="container">
-            <div className="text-center mb-5">
-              <h2 className="display-6 fw-bold mb-3">A Virtuous Circle</h2>
-              <p className="text-muted-custom" style={{ maxWidth: '720px', margin: '0 auto' }}>
-                Pretrend doesn&apos;t grow in isolation. A share of every dollar it earns flows back
-                into the Vitruveo ecosystem — and that success compounds.
-              </p>
-            </div>
-
-            <div className="row justify-content-center mb-4">
-              <div className="col-lg-10">
-                <div className="card-dark p-4 p-lg-5">
-                  <VirtuousCircleSVG />
-                </div>
-              </div>
-            </div>
-
-            <div className="row g-4 justify-content-center">
-              <div className="col-lg-5 col-md-6">
-                <div className="card-accent p-4 p-lg-5 h-100">
-                  <h3 className="h5 mb-3">The 2% Revenue Share</h3>
-                  <p className="text-muted-custom mb-3">
-                    2% of all Pretrend revenue is split straight back into the Vitruveo ecosystem:
-                  </p>
-                  <div className="d-flex flex-column gap-2">
-                    <div className="p-3 rounded" style={{ background: 'rgba(0,0,0,0.25)' }}>
-                      <span className="text-green fw-bold">1%</span>
-                      <span className="text-white ms-2">deepens VTRU liquidity</span>
-                    </div>
-                    <div className="p-3 rounded" style={{ background: 'rgba(0,0,0,0.25)' }}>
-                      <span className="text-green fw-bold">1%</span>
-                      <span className="text-white ms-2">flows to every VIBE holder</span>
-                    </div>
-                  </div>
-                </div>
-              </div>
-              <div className="col-lg-5 col-md-6">
-                <div className="card-dark p-4 p-lg-5 h-100 d-flex flex-column justify-content-center">
-                  <h3 className="h5 text-green mb-3">Success compounds</h3>
-                  <p className="text-muted-custom mb-0">
-                    Pretrend&apos;s success drives VTRU&apos;s, and VTRU&apos;s drives the whole
-                    Vitruveo ecosystem&apos;s — lifting asset value and rewarding VIBE holders at the same time.
-                  </p>
-                </div>
-              </div>
-            </div>
-          </div>
-        </section>
-
         {/* Five Outcome Buckets */}
-        <section className="section-padding bg-dark-custom">
+        <section className="section-padding bg-dark-alt">
           <div className="container">
             <h2 className="display-6 fw-bold text-center mb-5">Five Outcome Buckets</h2>
             <p className="text-muted-custom text-center mb-5" style={{ maxWidth: '600px', margin: '0 auto' }}>
@@ -712,7 +623,7 @@ export default function ProtocolPage() {
         </section>
 
         {/* What You Can Predict */}
-        <section className="section-padding bg-dark-alt">
+        <section className="section-padding bg-dark-custom">
           <div className="container">
             <h2 className="display-6 fw-bold text-center mb-3">What You Can Predict</h2>
             <p className="text-muted-custom text-center mb-5" style={{ maxWidth: '680px', margin: '0 auto' }}>
