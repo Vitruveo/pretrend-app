@@ -147,7 +147,7 @@ export function BuyPanel({ market, win, viewStart, allowed, bucket: selBucket, o
   const setBucket = onBucket || setOwnBucket;
   const [text, setText] = useState('');
   const [busy, setBusy] = useState(false);
-  const [msg, setMsg] = useState(null);
+  const [msgState, setMsgState] = useState(null); // { start, text }: a message belongs to the market it was made in
 
   // the market of the page clock's window: a new window is a new query, fetched the moment it starts
   const viewing = viewStart != null; // a settled market is on screen: no buying, its positions and payouts
@@ -157,6 +157,8 @@ export function BuyPanel({ market, win, viewStart, allowed, bucket: selBucket, o
   const vtruQ = useBalance({ address, chainId: VITRUVEO_CHAIN_ID, query: { enabled: !!address, refetchInterval: 30000 } });
 
   const amount = parseAmount(text);
+  const setMsg = (v) => setMsgState(v == null ? null : { start, text: v });
+  const msg = msgState && msgState.start === start ? msgState.text : null;
 
   if (!typeId) return null;
   const raw = snapQ.data;
