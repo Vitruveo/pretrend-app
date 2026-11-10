@@ -13,7 +13,7 @@ export default function Header() {
   const [aboutOpen, setAboutOpen] = useState(false);
   const pathname = usePathname();
   const cleanPath = pathname?.replace(/\/+$/, '') ?? '';
-  const isAbout = ['/about', '/protocol', '/whitepaper', '/ols', '/examples'].includes(cleanPath);
+  const isAbout = ['/whitepaper', '/ols', '/examples'].includes(cleanPath);
 
   useEffect(() => {
     const onScroll = () => setScrolled(window.scrollY > 50);
@@ -50,37 +50,31 @@ export default function Header() {
         </button>
         <div className={`navbar-collapse justify-content-end ${menuOpen ? 'show' : 'collapse'}`} id="navbarNav">
           <ul className="navbar-nav gap-md-4 align-items-md-center">
+            <li className="nav-item" onClick={() => setMenuOpen(false)}>
+              <a className={`nav-link ${cleanPath === '/protocol' ? 'active' : ''}`} href="/protocol">Protocol</a>
+            </li>
+            <li className="nav-item" onClick={() => setMenuOpen(false)}>
+              <a className={`nav-link ${cleanPath === '/trendpulse' ? 'active' : ''}`} href="/trendpulse">TrendPulse</a>
+            </li>
             <li
               className={`nav-item dropdown ${aboutOpen ? 'show' : ''}`}
               onMouseEnter={() => setAboutOpen(true)}
               onMouseLeave={() => setAboutOpen(false)}
             >
-              <a
-                className={`nav-link dropdown-toggle ${isAbout ? 'active' : ''}`}
-                href="/about"
-                role="button"
+              {/* About is a menu only: it has no page of its own. */}
+              <button
+                type="button"
+                className={`nav-link dropdown-toggle bg-transparent border-0 ${isAbout ? 'active' : ''}`}
                 aria-expanded={aboutOpen}
-                onClick={(e) => {
-                  // On touch/mobile the first tap opens the menu; the About page is reachable from the menu.
-                  if (window.matchMedia('(max-width: 767.98px)').matches && !aboutOpen) {
-                    e.preventDefault();
-                    setAboutOpen(true);
-                  }
-                }}
+                onClick={() => setAboutOpen((v) => !v)}
               >
                 About
-              </a>
+              </button>
               <ul className={`dropdown-menu dropdown-menu-dark ${aboutOpen ? 'show' : ''}`} onClick={() => { setAboutOpen(false); setMenuOpen(false); }}>
-                <li><a className="dropdown-item" href="/about">About Pretrend</a></li>
-                <li><a className="dropdown-item" href="/protocol">Protocol</a></li>
-                <li><hr className="dropdown-divider" /></li>
                 <li><a className="dropdown-item" href="/whitepaper">Whitepaper</a></li>
                 <li><a className="dropdown-item" href="/ols">OLS</a></li>
                 <li><a className="dropdown-item" href="/examples">Examples</a></li>
               </ul>
-            </li>
-            <li className="nav-item" onClick={() => setMenuOpen(false)}>
-              <a className="nav-link" href="/trendpulse">TrendPulse</a>
             </li>
           </ul>
           <div className="ms-md-4 mt-3 mt-md-0">

@@ -8,6 +8,7 @@ const nextConfig: NextConfig = {
   async redirects() {
     return [
       { source: '/markets', destination: '/', permanent: false },
+      { source: '/about', destination: '/protocol/', permanent: true },
       { source: '/trendplay', destination: 'https://www.epicaiwars.com/trends', permanent: false },
       { source: '/market/aiwars/:path*', destination: 'https://www.epicaiwars.com/trends', permanent: false },
     ];

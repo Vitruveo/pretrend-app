@@ -224,6 +224,18 @@ export default function ProtocolPage() {
                 magnitude and direction of change — not just whether an event occurs.
               </p>
               <p className="text-white-50 mt-3">Version 2.0</p>
+              <div className="mt-5 mx-auto" style={{ maxWidth: '820px' }}>
+                <video
+                  src="/videos/pretrend-intro.mp4"
+                  poster="/videos/pretrend-intro.jpg"
+                  controls
+                  playsInline
+                  preload="metadata"
+                  className="w-100 d-block"
+                  style={{ aspectRatio: '16 / 9', borderRadius: '16px', border: '1px solid rgba(255,255,255,0.12)', background: '#000' }}
+                  aria-label="Pretrend introduction video"
+                />
+              </div>
               <div className="mt-5">
                 <DomainCarousel />
               </div>
@@ -239,8 +251,42 @@ export default function ProtocolPage() {
           </div>
         </section>
 
+        {/* About (merged from the former /about page) */}
+        <section id="about" className="section-padding bg-dark-alt">
+          <div className="container">
+            <div className="row g-4 justify-content-center">
+              <div className="col-lg-10">
+                <div className="row g-4">
+                  <div className="col-md-6">
+                    <h2 className="h4 text-green mb-3">What it does</h2>
+                    <p className="text-muted-custom mb-0">
+                      A Pretrend market asks how much something will move, not whether it will.
+                      Prices from a live feed are sampled over a fixed window, a trend line is fit
+                      across the whole window, and the slope lands in one of five graded outcome
+                      buckets. The computation runs inside the chain through the Trend precompile,
+                      so settlement is deterministic and verifiable by anyone.
+                    </p>
+                  </div>
+                  <div className="col-md-6">
+                    <h2 className="h4 text-green mb-3">Who builds it</h2>
+                    <p className="text-muted-custom mb-0">
+                      Pretrend is developed by{' '}
+                      <a href="https://www.verticalfoundation.net" target="_blank" rel="noopener noreferrer" className="text-green text-decoration-none">
+                        Vertical Foundation
+                      </a>{' '}
+                      as part of the Vitruveo ecosystem. The statistical engine ships inside the
+                      Vitruveo protocol itself; TrendPulse, the oracle, publishes the feeds; and
+                      AIWars Trends is the first game built on top of them.
+                    </p>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
+
         {/* Vision */}
-        <section id="vision" className="section-padding bg-dark-alt">
+        <section id="vision" className="section-padding bg-dark-custom">
           <div className="container">
             <div className="text-center mb-5">
               <h2 className="display-6 fw-bold mb-4">Vision</h2>
