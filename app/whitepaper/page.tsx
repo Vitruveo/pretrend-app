@@ -5,7 +5,7 @@ import { whitepaperHtml, whitepaperMeta, whitepaperToc } from './content';
 
 export const metadata: Metadata = {
   title: "Whitepaper | Pretrend Protocol",
-  description: "The Pretrend Protocol whitepaper: continuous trend resolution for prediction markets — system architecture, oracle specification, pricing model, marketplace mechanics, fees, and security.",
+  description: "The Pretrend whitepaper v4: a trend prediction marketplace — oracle, Timeslope pricing, payouts, fees, VUSD, availability, and security.",
 };
 
 export default function WhitepaperPage() {

@@ -461,7 +461,7 @@ p {
   text-align: center;
 }
 
-/* Animated whitepaper figure: 12s loop — lead-in, market open, draw, 50% reveal, close */
+/* Animated whitepaper figure: 12s loop — lead-in, market open, feed and live trend draw, 80% close, market close */
 .wp-figure .wpa-feed {
   stroke-dasharray: 1;
   animation: wpa-feed-draw 12s linear infinite;
@@ -493,9 +493,10 @@ p {
   75%, 100% { stroke-dashoffset: 0; }
 }
 
+/* v4: the live trend draws with the feed from market open */
 @keyframes wpa-trend-reveal {
-  0%, 62.5% { clip-path: inset(0 20% 0 0); opacity: 0; }
-  64.5% { opacity: 1; }
+  0%, 12.5% { clip-path: inset(0 100% 0 0); opacity: 0; }
+  14% { opacity: 1; }
   75%, 100% { clip-path: inset(0 0 0 0); opacity: 1; }
 }
 

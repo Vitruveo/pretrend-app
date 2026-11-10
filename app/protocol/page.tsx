@@ -387,8 +387,8 @@ export default function ProtocolPage() {
                   desc: 'Complete development of Pretrend and launch the oracle alongside the reference site.',
                   href: null,
                   cta: null,
-                  done: false,
-                  inProgress: true,
+                  done: true,
+                  inProgress: false,
                 },
               ].map((item, i, arr) => (
                 <div key={item.q} className="col-lg-3 col-md-6">
