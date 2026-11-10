@@ -865,7 +865,7 @@ export default function ProtocolPage() {
             <div className="row g-4 mb-5">
               {[
                 { category: 'pump.fun Buy Volume', examples: 'SOL spent buying pump.fun coins on their bonding curve', meta: 'Every 2 seconds · 5-minute markets · Live' },
-                { category: 'Bitcoin', examples: 'BTC against USDT, from a continuous exchange stream', meta: 'Every 5 seconds · 15-minute markets · Read-only' },
+                { category: 'Bitcoin', examples: 'BTC against USDT, from a continuous exchange stream', meta: 'Every 5 seconds · 15-minute markets · Live' },
                 { category: 'Ethereum', examples: 'ETH against USDT, from a continuous exchange stream', meta: 'Every 5 seconds · 30-minute markets · Read-only' },
                 { category: 'Equities', examples: 'Stock prices, indices, forex rates', meta: 'Planned' },
                 { category: 'Commodities', examples: 'Oil, gold, natural gas, agricultural futures', meta: 'Planned' },
@@ -916,7 +916,7 @@ export default function ProtocolPage() {
                   <h3 className="h5 text-green mb-3">Payouts</h3>
                   <p className="text-muted-custom mb-0">
                     Winners get their buy amount back plus a share of the losing buckets in proportion
-                    to their units.
+                    to their units, sent to their wallets automatically as soon as the market resolves.
                   </p>
                 </div>
               </div>
