@@ -16,28 +16,26 @@ export function MarketCards() {
   const { series } = useLiveSeries(MARKETS);
 
   return (
-    <div>
+    <div className="row g-4 mb-4">
       {MARKETS.map((m) => (
-        <div key={m.slug} className="card-dark p-3 p-md-4 mb-4">
-          {/* chart and description side by side at equal height; the side box clips to the chart's height */}
-          <div className="tps-row" style={{ alignItems: 'stretch' }}>
-            <div className="tps-chart">
-              <LiveChart label={m.windowLabel.toUpperCase()} name={m.name} points={series[m.slug]} unit={m.unit} windowLabel={m.windowLabel} trendMode={m.trendMode} color={m.color} labelColor={m.labelColor} trendColor={m.trendColor} headlineColor={m.headlineColor} />
+        <div key={m.slug} className="col-lg-6">
+          {/* one tile per market, two across: chart, then headline and description, then the button */}
+          <div className="card-dark p-3 p-md-4 h-100 d-flex flex-column">
+            <LiveChart label={m.windowLabel.toUpperCase()} name={m.name} points={series[m.slug]} unit={m.unit} windowLabel={m.windowLabel} trendMode={m.trendMode} color={m.color} labelColor={m.labelColor} trendColor={m.trendColor} headlineColor={m.headlineColor} />
+            <div className="tps-info-title mt-3" style={m.headlineColor ? { color: m.headlineColor } : undefined}>
+              {m.headline}{m.readOnly && <ReadOnlyBadge />}
             </div>
-            <div className="tps-info d-flex flex-column" style={{ minHeight: 0, overflow: 'hidden' }}>
-              <div className="tps-info-title" style={m.headlineColor ? { color: m.headlineColor } : undefined}>
-                {m.headline}{m.readOnly && <ReadOnlyBadge />}
-              </div>
-              <p className="tps-info-desc mb-0">{m.desc}</p>
+            <p className="tps-info-desc mb-0">{m.desc}</p>
+            <div className="mt-auto pt-3">
+              <a
+                href={`/markets/${m.slug}`}
+                className="btn btn-signal btn-lg w-100"
+                style={{ fontSize: '1.2rem', padding: '0.8rem 1rem', letterSpacing: '0.08em' }}
+              >
+                {m.readOnly ? 'View' : 'Launch'} {m.name} Market
+              </a>
             </div>
           </div>
-          <a
-            href={`/markets/${m.slug}`}
-            className="btn btn-signal btn-lg w-100 mt-3"
-            style={{ fontSize: '1.35rem', padding: '0.85rem 1rem', letterSpacing: '0.08em' }}
-          >
-            {m.readOnly ? 'View' : 'Launch'} {m.name} Market
-          </a>
         </div>
       ))}
     </div>

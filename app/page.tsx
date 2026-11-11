@@ -14,7 +14,7 @@ export default function TrendsPage() {
       <Header />
       <main>
         <section className="section-padding bg-dark-custom" style={{ paddingTop: '140px', paddingBottom: '60px' }}>
-          <div className="container" style={{ maxWidth: '960px' }}>
+          <div className="container" style={{ maxWidth: '1200px' }}>
             <div className="text-center mb-5">
               <h1 className="display-5 fw-bold mb-3">
                 <span className="text-gradient">Trends</span>
