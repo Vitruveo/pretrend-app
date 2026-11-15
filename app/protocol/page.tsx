@@ -866,7 +866,6 @@ export default function ProtocolPage() {
               {[
                 { category: 'pump.fun Buy Volume', examples: 'SOL spent buying pump.fun coins on their bonding curve', meta: 'Every 2 seconds · 5-minute markets · Live' },
                 { category: 'Bitcoin', examples: 'BTC against USDT, from a continuous exchange stream', meta: 'Every 5 seconds · 15-minute markets · Live' },
-                { category: 'Ethereum', examples: 'ETH against USDT, from a continuous exchange stream', meta: 'Every 5 seconds · 30-minute markets · Read-only' },
                 { category: 'Equities', examples: 'Stock prices, indices, forex rates', meta: 'Planned' },
                 { category: 'Commodities', examples: 'Oil, gold, natural gas, agricultural futures', meta: 'Planned' },
                 { category: 'Social Metrics', examples: 'Follower counts, view counts, engagement rates', meta: 'Planned' },

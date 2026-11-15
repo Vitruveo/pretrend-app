@@ -50,28 +50,6 @@ export const MARKETS = [
     attribution: 'Binance',
     cta: 'Open Bitcoin 15',
   },
-  {
-    slug: 'ethereum-30',
-    name: 'Ethereum 30',
-    headline: 'Ethereum, 30-minute markets',
-    source: 'ethusdt',
-    unit: 'usd',
-    windowS: 30 * 60,
-    windowLabel: '30-min',
-    trendMode: 'pct',
-    readOnly: true,
-    desc: 'ETH against USDT, sampled identically to the Bitcoin feed. Thirty minutes per market, resolved on the OLS trend of the window. Read-only: watch the markets resolve while the protocol is finalized.',
-    dataCadence: 'every 5 seconds',
-    cadenceS: 5,
-    game: false,
-    lockFrac: 0.8,
-    fallbackThresholds: [-12, -4, 4, 12],
-    range: [0, null],
-    unitLabel: 'USD',
-    feedName: 'ETH-USDT',
-    attribution: 'Binance',
-    cta: 'Watch Ethereum 30',
-  },
 ];
 
 export function findMarket(slug) {
