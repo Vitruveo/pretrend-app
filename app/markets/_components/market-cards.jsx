@@ -12,6 +12,14 @@ function ReadOnlyBadge() {
   );
 }
 
+function NoFeeBadge() {
+  return (
+    <span className="badge rounded-pill ms-2 align-middle" style={{ background: 'rgba(122,190,77,0.15)', color: '#7abe4d', fontWeight: 600, letterSpacing: '0.08em', fontSize: '0.62rem' }}>
+      NO FEE
+    </span>
+  );
+}
+
 // AI Wars Trends runs on epicaiwars.com on the aiwars-momentum pulse; its tile links out.
 const AIWARS_TILE = {
   slug: 'aiwars',
@@ -43,7 +51,7 @@ export function MarketCards() {
           <div className="card-dark p-3 p-md-4 h-100 d-flex flex-column">
             <LiveChart label={m.windowLabel.toUpperCase()} name={m.name} points={series[m.slug]} unit={m.unit} windowLabel={m.windowLabel} trendMode={m.trendMode} color={m.color} labelColor={m.labelColor} trendColor={m.trendColor} headlineColor={m.headlineColor} />
             <div className="tps-info-title mt-3" style={m.headlineColor ? { color: m.headlineColor } : undefined}>
-              {m.headline}{m.readOnly && <ReadOnlyBadge />}
+              {m.headline}{m.readOnly && <ReadOnlyBadge />}{m.feeFree && <NoFeeBadge />}
             </div>
             <p className="tps-info-desc mb-0">{m.desc}</p>
             <div className="mt-auto pt-3">

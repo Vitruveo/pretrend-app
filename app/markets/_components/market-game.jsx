@@ -267,7 +267,9 @@ export function MarketGame({ market }) {
         <BuyPanel market={market} win={win} viewStart={result ? result.start : null} allowed={geo.allowed} bucket={call} onBucket={onCall} onBought={onCall} part="positions" />
         <div className="ptm-section d-flex justify-content-between align-items-center flex-wrap gap-2">
           <span className="ptm-faint small">
-            {geo.allowed ? 'Buys are in VUSD on Vitruveo and settle on-chain when the market ends. The fee is 0.90 VUSD or 2%, whichever is higher.' : null}
+            {geo.allowed
+              ? `Buys are in VUSD on Vitruveo and settle on-chain when the market ends. ${market.feeFree ? 'This market has no fee.' : 'The fee is 0.90 VUSD or 2%, whichever is higher.'}`
+              : null}
           </span>
           <a href="#rulebook" className="ptm-btn ptm-btn-ghost">Rulebook</a>
         </div>

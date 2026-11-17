@@ -6,7 +6,7 @@ import { BUCKET_NAMES, BUCKET_COLORS } from '../../markets/_lib/gamemath';
 
 const REFRESH_MS = 10_000;
 const EXPLORER = 'https://explorer.vitruveo.ai';
-const NAMES = { 'pumpfun-5': 'pump.fun 5', 'bitcoin-15': 'Bitcoin 15' };
+const NAMES = { 'pumpfun-5': 'pump.fun 5', 'pumpfun-3': 'pump.fun 3', 'bitcoin-15': 'Bitcoin 15', 'bitcoin-3': 'Bitcoin 3' };
 
 const short = (a) => (a ? `${a.slice(0, 6)}…${a.slice(-4)}` : '—');
 const fmtTime = (s) => new Date(s * 1000).toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' });

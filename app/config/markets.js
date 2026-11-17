@@ -1,5 +1,6 @@
 // Pretrend markets listed on the Trends home page and served under /markets/{slug}.
-// Each market reads one TrendPulse source; the window is the market's game length.
+// Each market reads one TrendPulse source; the window is the market's game length. feeFree markets carry a
+// zero per-type fee on PretrendMarkets (setTypeFee); the contract is the source of truth for the fee.
 
 export const MARKETS = [
   {
@@ -29,6 +30,33 @@ export const MARKETS = [
     cta: 'Open pump.fun 5',
   },
   {
+    slug: 'pumpfun-3',
+    name: 'pump.fun 3',
+    headline: 'pump.fun Buy Volume, 3-minute markets',
+    source: 'pumpfun-buys',
+    unit: 'sol',
+    windowS: 3 * 60,
+    windowLabel: '3-min',
+    trendMode: 'abs',
+    readOnly: false,
+    feeFree: true,
+    color: '#4cc38a',
+    labelColor: '#9be7bf',
+    trendColor: '#e8c547',
+    headlineColor: '#3fd68f',
+    desc: 'SOL spent buying pump.fun coins still on their bonding curve, summed every two seconds. Three minutes per market, no fee: predict whether memecoin demand on Solana trends up, down or flat, in five graded buckets.',
+    dataCadence: 'every 2 seconds',
+    cadenceS: 2,
+    game: true,
+    lockFrac: 0.8,
+    fallbackThresholds: [-6, -2, 2, 6],
+    range: [0, null],
+    unitLabel: 'SOL',
+    feedName: 'PUMP.FUN BUYS',
+    attribution: 'Solana RPC (pump.fun program logs)',
+    cta: 'Open pump.fun 3',
+  },
+  {
     slug: 'bitcoin-15',
     name: 'Bitcoin 15',
     headline: 'Bitcoin, 15-minute markets',
@@ -49,6 +77,29 @@ export const MARKETS = [
     feedName: 'BTC-USDT',
     attribution: 'Binance',
     cta: 'Open Bitcoin 15',
+  },
+  {
+    slug: 'bitcoin-3',
+    name: 'Bitcoin 3',
+    headline: 'Bitcoin, 3-minute markets',
+    source: 'btcusdt',
+    unit: 'usd',
+    windowS: 3 * 60,
+    windowLabel: '3-min',
+    trendMode: 'pct',
+    readOnly: false,
+    feeFree: true,
+    desc: 'BTC against USDT, sampled every five seconds from a continuous exchange stream. Three minutes per market, no fee: predict whether Bitcoin trends up, down or flat, in five graded buckets, resolved on the OLS trend of the window.',
+    dataCadence: 'every 5 seconds',
+    cadenceS: 5,
+    game: true,
+    lockFrac: 0.8,
+    fallbackThresholds: [-63, -19, 19, 63],
+    range: [0, null],
+    unitLabel: 'USD',
+    feedName: 'BTC-USDT',
+    attribution: 'Binance',
+    cta: 'Open Bitcoin 3',
   },
 ];
 

@@ -905,8 +905,8 @@ export default function ProtocolPage() {
                 <div className="card-dark p-4 h-100">
                   <h3 className="h5 text-green mb-3">Fees</h3>
                   <p className="text-muted-custom mb-0">
-                    Each buy carries a fee of 0.90 VUSD or 2%, whichever is higher. There is no fee
-                    at resolution and no fee on payouts.
+                    Each buy carries a fee of 0.90 VUSD or 2%, whichever is higher. Some markets, such as
+                    the 3-minute markets, carry no fee. There is no fee at resolution and no fee on payouts.
                   </p>
                 </div>
               </div>

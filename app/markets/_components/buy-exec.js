@@ -30,10 +30,20 @@ async function confirm(hash, say, label) {
   return hash;
 }
 
+// The fee on a buy in this market type (per-type fee). Falls back to the contract-wide fee on an implementation
+// without feeOf.
+async function feeOf(typeId, amount) {
+  try {
+    return await readContract(wagmiConfig, { ...M, functionName: 'feeOf', args: [BigInt(typeId), amount] });
+  } catch (e) {
+    return readContract(wagmiConfig, { ...M, functionName: 'feeFor', args: [amount] });
+  }
+}
+
 // amount and minUnits in wei; returns the buy transaction hash.
 export async function buyUnits({ account, typeId, bucket, amount, minUnits, say }) {
   await ensureChain(say);
-  const fee = await readContract(wagmiConfig, { ...M, functionName: 'feeFor', args: [amount] });
+  const fee = await feeOf(typeId, amount);
   const total = amount + fee;
   const allowance = await readContract(wagmiConfig, { address: VUSD_ADDRESS, abi: erc20Abi, functionName: 'allowance', args: [account, PRETREND_MARKETS_ADDRESS], chainId });
 

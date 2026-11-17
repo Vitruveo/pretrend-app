@@ -6,7 +6,7 @@ export const maxDuration = 60;
 
 const PERIODS = { '24h': 86400, '7d': 7 * 86400, all: null };
 
-// GET /api/leaderboard/?market=all|pumpfun-5|bitcoin-15&period=24h|7d|all
+// GET /api/leaderboard/?market=all|pumpfun-5|pumpfun-3|bitcoin-15|bitcoin-3&period=24h|7d|all
 export async function GET(req) {
   const q = new URL(req.url).searchParams;
   const market = q.get('market') || 'all';

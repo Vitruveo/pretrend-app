@@ -4,7 +4,7 @@ import { useEffect, useMemo, useState } from 'react';
 import { useAccount } from 'wagmi';
 import { EXPLORER } from '../../config/pretrend-markets';
 
-const MARKETS = [['all', 'All markets'], ['pumpfun-5', 'pump.fun 5'], ['bitcoin-15', 'Bitcoin 15']];
+const MARKETS = [['all', 'All markets'], ['pumpfun-5', 'pump.fun 5'], ['pumpfun-3', 'pump.fun 3'], ['bitcoin-15', 'Bitcoin 15'], ['bitcoin-3', 'Bitcoin 3']];
 const PERIODS = [['24h', '24 hours'], ['7d', '7 days'], ['all', 'All time']];
 const REFRESH_MS = 30_000;
 
