@@ -21,7 +21,9 @@ function UtcClock() {
 }
 import { isRestricted } from '../../config/geo';
 
-const GeoContext = createContext({ loading: true, country: null, name: null, flag: null, allowed: false, source: null });
+// restricted: the detected country is on the restricted list (drives the band). allowed: market features are on,
+// which is !restricted unless the server reports enforcement off (DEV_COUNTRY_ENFORCEMENT=0).
+const GeoContext = createContext({ loading: true, country: null, name: null, flag: null, restricted: true, allowed: false, source: null });
 
 export function useGeo() {
   return useContext(GeoContext);
@@ -56,7 +58,7 @@ function localeCountry() {
 }
 
 export function GeoProvider({ children }) {
-  const [state, setState] = useState({ loading: true, country: null, source: null });
+  const [state, setState] = useState({ loading: true, country: null, source: null, gate: true });
 
   useEffect(() => {
     let stop = false;
@@ -64,26 +66,32 @@ export function GeoProvider({ children }) {
       .then((r) => r.json())
       .then((d) => {
         if (stop) return;
-        if (d.country) setState({ loading: false, country: d.country, source: 'ip' });
+        const gate = d.gate !== false;
+        if (d.country) setState({ loading: false, country: d.country, source: 'ip', gate });
         else {
           const c = localeCountry();
-          setState({ loading: false, country: c, source: c ? 'locale' : null });
+          setState({ loading: false, country: c, source: c ? 'locale' : null, gate });
         }
       })
       .catch(() => {
         if (stop) return;
         const c = localeCountry();
-        setState({ loading: false, country: c, source: c ? 'locale' : null });
+        setState({ loading: false, country: c, source: c ? 'locale' : null, gate: true });
       });
     return () => { stop = true; };
   }, []);
 
-  const value = useMemo(() => ({
-    ...state,
-    name: nameOf(state.country),
-    flag: flagOf(state.country),
-    allowed: !state.loading && !isRestricted(state.country),
-  }), [state]);
+  const value = useMemo(() => {
+    const { gate, ...rest } = state;
+    const restricted = isRestricted(state.country);
+    return {
+      ...rest,
+      name: nameOf(state.country),
+      flag: flagOf(state.country),
+      restricted,
+      allowed: !state.loading && (!restricted || !gate),
+    };
+  }, [state]);
 
   return <GeoContext.Provider value={value}>{children}</GeoContext.Provider>;
 }
@@ -91,13 +99,15 @@ export function GeoProvider({ children }) {
 // Full-width band under the nav: the viewer's flag and country, and whether market features are on.
 export function GeoBand() {
   const geo = useGeo();
-  const tone = geo.loading ? 'rgba(255,255,255,0.06)' : geo.allowed ? 'rgba(122,190,77,0.14)' : 'rgba(239,68,68,0.14)';
-  const edge = geo.loading ? 'rgba(255,255,255,0.12)' : geo.allowed ? 'rgba(122,190,77,0.45)' : 'rgba(239,68,68,0.45)';
+  // the band always reports detection, whether or not enforcement is on
+  const ok = !geo.loading && !geo.restricted;
+  const tone = geo.loading ? 'rgba(255,255,255,0.06)' : ok ? 'rgba(122,190,77,0.14)' : 'rgba(239,68,68,0.14)';
+  const edge = geo.loading ? 'rgba(255,255,255,0.12)' : ok ? 'rgba(122,190,77,0.45)' : 'rgba(239,68,68,0.45)';
   const text = geo.loading
     ? 'Identifying your country…'
     : !geo.country
       ? 'Country not identified. Features not available in your country.'
-      : geo.allowed
+      : ok
         ? 'Features enabled for country'
         : 'Features not available in your country.';
   return (
