@@ -29,13 +29,13 @@ export default function Header() {
       style={{ transition: 'background 0.3s' }}
     >
       <div className="container">
-        <a className="navbar-brand fw-bold d-flex align-items-center gap-2" href="/" style={{ fontSize: '1.5rem', letterSpacing: '-0.02em' }}>
+        <a className="navbar-brand fw-bold d-flex align-items-center gap-2" href="/" style={{ fontSize: '2.1rem', letterSpacing: '-0.02em' }}>
           <img
             src="/assets/pretrend-logomark.png"
             alt="Pretrend"
-            width={34}
-            height={34}
-            style={{ height: '34px', width: 'auto' }}
+            width={48}
+            height={48}
+            style={{ height: '48px', width: 'auto' }}
           />
           <span className="text-gradient">Pretrend</span>
         </a>

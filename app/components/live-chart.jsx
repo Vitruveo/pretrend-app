@@ -42,17 +42,18 @@ export function fmtTime(ts) {
 
 const FONT = "'Titillium Web',sans-serif";
 
-export function LiveChart({ label, name, points, unit, windowLabel, trendMode, color = '#63a83a', labelColor = '#a3d97a', trendColor = '#2f8fd6', headlineColor = 'rgba(255,255,255,0.7)' }) {
+export function LiveChart({ label, name, points, unit, windowLabel, trendMode, color = '#63a83a', labelColor = '#a3d97a', trendColor = '#2f8fd6', headlineColor = 'rgba(255,255,255,0.7)', bare = false }) {
   const W = 720;
   const H = 300;
-  const X0 = 60;
-  const X1 = 690;
-  const Y0 = 25;
-  const Y1 = 255;
+  // bare: no text labels, plot fills the frame (market cards)
+  const X0 = bare ? 12 : 60;
+  const X1 = bare ? 708 : 690;
+  const Y0 = bare ? 12 : 25;
+  const Y1 = bare ? 288 : 255;
 
   if (!points || points.length < 2) {
     return (
-      <div className="text-muted-custom small py-5 text-center">Waiting for data&hellip;</div>
+      <div className="text-muted-custom small d-flex align-items-center justify-content-center" style={{ width: '100%', aspectRatio: `${W} / ${H}` }}>Waiting for data&hellip;</div>
     );
   }
 
@@ -86,6 +87,7 @@ export function LiveChart({ label, name, points, unit, windowLabel, trendMode, c
         />
       )}
       <circle cx={px(last[0]).toFixed(1)} cy={py(last[1]).toFixed(1)} r="3.5" fill={color} stroke="#0a0f0a" strokeWidth="1.5" />
+      {!bare && <>
       <text x={px(last[0]) - 9} y={(py(last[1]) - 10).toFixed(1)} textAnchor="end" fill={labelColor} fontSize="13" fontWeight="600" fontFamily={FONT} stroke="#0a0f0a" strokeWidth="3" paintOrder="stroke" style={{ fontVariantNumeric: 'tabular-nums' }}>
         {fmtValue(last[1], unit)}
       </text>
@@ -101,6 +103,7 @@ export function LiveChart({ label, name, points, unit, windowLabel, trendMode, c
       )}
       <text x={X0} y={275} fill="rgba(255,255,255,0.5)" fontSize="11" fontFamily={FONT}>{fmtTime(tMin)} UTC</text>
       <text x={X1} y={275} textAnchor="end" fill="rgba(255,255,255,0.5)" fontSize="11" fontFamily={FONT}>{fmtTime(tMax)} UTC</text>
+      </>}
     </svg>
   );
 }
